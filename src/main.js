@@ -6,8 +6,67 @@ import * as System from './system.js';
 
 var needReset = false;
 
-export function hello() {
-    console.log('Hello World!');
+//event variables
+var lastX = 0.0;
+var lastY = 0.0;
+var buttonDown = false;
+
+export function add_event_handlers(canvas, view) {
+    canvas.addEventListener('mousedown', function(e) {
+        document.body.style.cursor = "none";
+        if (e.button == 0) {
+            buttonDown = true;
+        }
+        lastX = e.clientX;
+        lastY = e.clientY;
+    });
+
+    window.addEventListener("mouseup", function(e) {
+        document.body.style.cursor = "";
+        if (e.button == 0) {
+            buttonDown = false;
+        }
+    });
+
+    setInterval(function() {
+        if (!buttonDown) {
+            document.body.style.cursor = "";
+        }
+    }, 10);
+
+    window.addEventListener("mousemove", function(e) {
+        if (!buttonDown) {
+            return;
+        }
+        var dx = e.clientX - lastX;
+        var dy = e.clientY - lastY;
+        if (dx == 0 && dy == 0) {
+            return;
+        }
+        lastX = e.clientX;
+        lastY = e.clientY;
+        if (e.shiftKey) {
+            View.translate(view, dx, dy);
+        } else {
+            View.rotate(view, dx, dy);
+        }
+        needReset = true;
+    });
+
+    canvas.addEventListener("wheel", function(e) {
+        var wd = 0;
+        if (e.deltaY < 0) {
+            wd = 1;
+        }
+        else {
+            wd = -1;
+        }
+        view.zoom = view.zoom * (wd === 1 ? 1/0.9 : 0.9);
+        View.resolve(view);
+        needReset = true;
+
+        e.preventDefault();
+    });
 }
 
 export function init_view() {
@@ -40,6 +99,7 @@ export function loadStructure(data, view, renderer) {
 
     return system;
 }
+
 
 
 export function animation_loop(view, renderer) {
