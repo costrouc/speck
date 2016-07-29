@@ -1,20 +1,20 @@
 "use strict";
 
-var glm = require("./gl-matrix")
+import * as glm from './gl-matrix/gl-matrix.js';
+import { elements } from './elements.js';
+import * as consts from './const.js';
 
-var elements = require("./elements");
-var consts = require("./const");
 
-var newSystem = module.exports.new = function() {
+export function System() {
     return {
         atoms: [],
         farAtom: undefined,
         bonds: []
-    }
+    };
 };
 
 
-var calculateBonds = module.exports.calculateBonds = function(s) {
+export function calculateBonds(s) {
     var bonds = [];
     var sorted = s.atoms.slice();
     sorted.sort(function(a, b) {
@@ -64,19 +64,20 @@ var calculateBonds = module.exports.calculateBonds = function(s) {
         return a.cutoff - b.cutoff;
     });
     s.bonds = bonds;
-}
+};
 
 
-var addAtom = module.exports.addAtom = function(s, symbol, x, y, z) {
+export function addAtom(s, symbol, x, y, z) {
     s.atoms.push({
         symbol: symbol,
         x: x,
         y: y,
-        z: z,
+        z: z
     });
 };
 
-var getCentroid = module.exports.getCentroid = function(s) {
+
+export function getCentroid(s) {
     var xsum = 0;
     var ysum = 0;
     var zsum = 0;
@@ -92,7 +93,8 @@ var getCentroid = module.exports.getCentroid = function(s) {
     };
 };
 
-var center = module.exports.center = function(s) {
+
+export function center(s) {
     var shift = getCentroid(s);
     for (var i = 0; i < s.atoms.length; i++) {
         var atom = s.atoms[i];
@@ -100,9 +102,10 @@ var center = module.exports.center = function(s) {
         atom.y -= shift.y;
         atom.z -= shift.z;
     }
-}
+};
 
-var getFarAtom = module.exports.getFarAtom = function(s) {
+
+export function getFarAtom(s) {
     if (s.farAtom !== undefined) {
         return s.farAtom;
     }
@@ -119,11 +122,12 @@ var getFarAtom = module.exports.getFarAtom = function(s) {
         }
     }
     return s.farAtom;
-}
+};
 
-var getRadius = module.exports.getRadius = function(s) {
+
+export function getRadius(s) {
     var atom = getFarAtom(s);
     var r = consts.MAX_ATOM_RADIUS;
     var rd = Math.sqrt(r*r + r*r + r*r) * 2.5;
     return Math.sqrt(atom.x*atom.x + atom.y*atom.y + atom.z*atom.z) + rd;
-}
+};

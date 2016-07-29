@@ -1,18 +1,26 @@
 {
-  "name": "speck",
-  "version": "0.0.0",
-  "description": "",
-  "main": "index.js",
-  "dependencies": {
-    "brfs": "~1.2.0",
-    "jquery": "^2.1.3",
-    "keyboardjs": "^0.4.2",
-    "lz-string": "^1.4.1"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "MIT"
+    "name": "speck",
+    "version": "1.0.0",
+    "description": "Speck is a library for drawing molecular beautifully",
+    "main": "index.js",
+    "devDependencies": {
+        "rollup": "latest"
+    },
+    "scripts": {
+        "rollup": "rollup --config \"rollup.config.js\""
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/costrouc/speck.git"
+    },
+    "keywords": [
+        "Molecular",
+        "Visualization"
+    ],
+    "author": "Chris Ostrouchov, wwwtyro",
+    "license": "UNLICENSED",
+    "bugs": {
+        "url": "https://github.com/costrouc/speck/issues"
+    },
+    "homepage": "https://github.com/costrouc/speck#readme"
 }

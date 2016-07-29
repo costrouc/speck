@@ -1,16 +1,16 @@
 "use strict";
 
+import * as glm from './gl-matrix/gl-matrix.js';
+import { elements } from './elements.js';
+import * as consts from './const.js';
 
-var glm = require("./gl-matrix");
-var elements = require("./elements");
-var consts = require("./const");
 
 function clamp(min, max, value) {
     return Math.min(max, Math.max(min, value));
 }
 
 
-var newView = module.exports.new = function() {
+export function View() {
     return {
         aspect: 1.0,
         zoom: 0.125,
@@ -39,7 +39,7 @@ var newView = module.exports.new = function() {
 };
 
 
-var center = module.exports.center = function(v, system) {
+export function center(v, system) {
     var maxX = -Infinity;
     var minX = Infinity;
     var maxY = -Infinity;
@@ -64,7 +64,7 @@ var center = module.exports.center = function(v, system) {
 };
 
 
-var override = module.exports.override = function(v, data) {
+export function override(v, data) {
     for (var key in data) {
         v[key] = data[key];
     }
@@ -72,24 +72,24 @@ var override = module.exports.override = function(v, data) {
 };
 
 
-var clone = module.exports.clone = function(v) {
+export function clone(v) {
     return deserialize(serialize(v));
 };
 
 
-var serialize = module.exports.serialize = function(v) {
+export function serialize(v) {
     return JSON.stringify(v);
 };
 
 
-var deserialize = module.exports.deserialize = function(v) {
+export function deserialize(v) {
     v = JSON.parse(v);
     v.rotation = glm.mat4.clone(v.rotation);
     return v;
 };
 
 
-var resolve = module.exports.resolve = function(v) {
+export function resolve(v) {
     v.dofStrength = clamp(0, 1, v.dofStrength);
     v.dofPosition = clamp(0, 1, v.dofPosition);
     v.zoom = clamp(0.001, 2.0, v.zoom);
@@ -104,14 +104,14 @@ var resolve = module.exports.resolve = function(v) {
 };
 
 
-var translate = module.exports.translate = function(v, dx, dy) {
+export function translate(v, dx, dy) {
     v.translation.x -= dx/(v.resolution * v.zoom);
     v.translation.y += dy/(v.resolution * v.zoom);
     resolve(v);
 };
 
 
-var rotate = module.exports.rotate = function(v, dx, dy) {
+export function rotate(v, dx, dy) {
     var m = glm.mat4.create();
     glm.mat4.rotateY(m, m, dx * 0.005);
     glm.mat4.rotateX(m, m, dy * 0.005);
@@ -120,7 +120,7 @@ var rotate = module.exports.rotate = function(v, dx, dy) {
 };
 
 
-var getRect = module.exports.getRect = function(v) {
+export function getRect(v) {
     var width = 1.0/v.zoom;
     var height = width/v.aspect;
     var bottom = -height/2 + v.translation.y;
@@ -136,9 +136,7 @@ var getRect = module.exports.getRect = function(v) {
 };
 
 
-var getBondRadius = module.exports.getBondRadius = function(v) {
-    return v.bondScale * v.atomScale * 
+export function getBondRadius(v) {
+    return v.bondScale * v.atomScale *
         (1 + (consts.MIN_ATOM_RADIUS - 1) * v.relativeAtomScale);
 };
-
-

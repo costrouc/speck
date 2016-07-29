@@ -1,4 +1,4 @@
-module.exports = {
+export var config = {
     default: {
         atomScale: 0.6,
         relativeAtomScale: 1.0,
@@ -16,24 +16,24 @@ module.exports = {
         dofPosition: 0.5,
         fxaa: 1
     },
-    stickball:  {
+    stickball: {
         atomScale: 0.24,
         relativeAtomScale: 0.64,
         bondScale: 0.5,
         bonds: true,
-        bondThreshold: 1.2,
+        bondThreshold: 1.2
     },
-    toon:  {
+    toon: {
         ao: 0,
         spf: 0,
         brightness: 0.5,
-        outline: 1,
+        outline: 1
     },
-    licorice:  {
+    licorice: {
         atomScale: 0.1,
         relativeAtomScale: 0,
         bondScale: 1,
         bonds: true,
-        bondThreshold: 1.2,
-    },
+        bondThreshold: 1.2
+    }
 };
