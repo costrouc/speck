@@ -2648,10 +2648,58 @@
 
 	var needReset = false;
 
-	//event variables
+	//Global event variables
 	var lastX = 0.0;
 	var lastY = 0.0;
 	var buttonDown = false;
+
+
+	function Speck(canvas) {
+	    this.canvas = canvas;
+	    this.view =  View();
+	    this.renderer = new Renderer(canvas, this.view.resolution, this.view.aoRes);
+	    this.renderer.setResolution(this.view.resolution, this.view.aoRes);
+	    this.system = null;
+
+	    add_event_handlers(canvas, this.view);
+
+	    this.loadStructure = function(data) {
+	        this.system = System();
+	        for (var i = 0; i < data.length; i++) {
+	            var atom = data[i];
+	            var x = atom.position[0];
+	            var y = atom.position[1];
+	            var z = atom.position[2];
+	            addAtom(this.system, atom.symbol, x, y, z);
+	        }
+	        center$1(this.system);
+	        calculateBonds(this.system);
+	        this.renderer.setSystem(this.system, this.view);
+	        center(this.view, this.system);
+	        needReset = true;
+	    };
+
+	    this.render = function() {
+	        if (this.system == null) {
+	            throw "must loadStructure before rendering";
+	        }
+
+	        render(this.view, this.renderer);
+	    };
+	}
+
+
+	function render(view, renderer) {
+	    if (needReset) {
+	        renderer.reset();
+	        needReset = false;
+	    }
+	    renderer.render(view);
+	    requestAnimationFrame(function(){
+	        render(view, renderer);
+	    });
+	};
+
 
 	function add_event_handlers(canvas, view) {
 	    canvas.addEventListener('mousedown', function(e) {
@@ -2711,59 +2759,7 @@
 	    });
 	}
 
-	function init_view() {
-	    view = View();
-	    return view;
-	}
-
-
-	function init_renderer(node) {
-	    var renderer = new Renderer(node, view.resolution, view.aoRes);
-
-	    return renderer;
-	}
-
-
-	function loadStructure(data, view, renderer) {
-	    var system = System();
-	    for (var i = 0; i < data.length; i++) {
-	        var atom = data[i];
-	        var x = atom.position[0];
-	        var y = atom.position[1];
-	        var z = atom.position[2];
-	        addAtom(system, atom.symbol, x, y, z);
-	    }
-	    center$1(system);
-	    calculateBonds(system);
-	    renderer.setSystem(system, view);
-	    center(view, system);
-	    needReset = true;
-
-	    return system;
-	}
-
-
-
-	function animation_loop(view, renderer) {
-	    if (needReset) {
-	        renderer.reset();
-	        needReset = false;
-	    }
-	    renderer.render(view);
-	    requestAnimationFrame(function(){
-	        animation_loop(view, renderer);
-	    });
-	}
-
-
-	// Not really needed
-	// export * from './presets.js';
-
-	exports.add_event_handlers = add_event_handlers;
-	exports.init_view = init_view;
-	exports.init_renderer = init_renderer;
-	exports.loadStructure = loadStructure;
-	exports.animation_loop = animation_loop;
+	exports.Speck = Speck;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 

@@ -6,12 +6,60 @@ import * as System from './system.js';
 
 var needReset = false;
 
-//event variables
+//Global event variables
 var lastX = 0.0;
 var lastY = 0.0;
 var buttonDown = false;
 
-export function add_event_handlers(canvas, view) {
+
+export function Speck(canvas) {
+    this.canvas = canvas;
+    this.view =  View.View();
+    this.renderer = new Renderer(canvas, this.view.resolution, this.view.aoRes);
+    this.renderer.setResolution(this.view.resolution, this.view.aoRes);
+    this.system = null;
+
+    add_event_handlers(canvas, this.view);
+
+    this.loadStructure = function(data) {
+        this.system = System.System();
+        for (var i = 0; i < data.length; i++) {
+            var atom = data[i];
+            var x = atom.position[0];
+            var y = atom.position[1];
+            var z = atom.position[2];
+            System.addAtom(this.system, atom.symbol, x, y, z);
+        }
+        System.center(this.system);
+        System.calculateBonds(this.system);
+        this.renderer.setSystem(this.system, this.view);
+        View.center(this.view, this.system);
+        needReset = true;
+    };
+
+    this.render = function() {
+        if (this.system == null) {
+            throw "must loadStructure before rendering";
+        }
+
+        render(this.view, this.renderer);
+    };
+}
+
+
+function render(view, renderer) {
+    if (needReset) {
+        renderer.reset();
+        needReset = false;
+    }
+    renderer.render(view);
+    requestAnimationFrame(function(){
+        render(view, renderer);
+    });
+};
+
+
+function add_event_handlers(canvas, view) {
     canvas.addEventListener('mousedown', function(e) {
         document.body.style.cursor = "none";
         if (e.button == 0) {
@@ -68,51 +116,3 @@ export function add_event_handlers(canvas, view) {
         e.preventDefault();
     });
 }
-
-export function init_view() {
-    view = View.View();
-    return view;
-}
-
-
-export function init_renderer(node) {
-    var renderer = new Renderer(node, view.resolution, view.aoRes);
-
-    return renderer;
-}
-
-
-export function loadStructure(data, view, renderer) {
-    var system = System.System();
-    for (var i = 0; i < data.length; i++) {
-        var atom = data[i];
-        var x = atom.position[0];
-        var y = atom.position[1];
-        var z = atom.position[2];
-        System.addAtom(system, atom.symbol, x, y, z);
-    }
-    System.center(system);
-    System.calculateBonds(system);
-    renderer.setSystem(system, view);
-    View.center(view, system);
-    needReset = true;
-
-    return system;
-}
-
-
-
-export function animation_loop(view, renderer) {
-    if (needReset) {
-        renderer.reset();
-        needReset = false;
-    }
-    renderer.render(view);
-    requestAnimationFrame(function(){
-        animation_loop(view, renderer);
-    });
-}
-
-
-// Not really needed
-// export * from './presets.js';
