@@ -1,6 +1,7 @@
 "use strict";
 
 import * as glm from './gl-matrix/gl-matrix.js';
+
 import { elements } from './elements.js';
 import * as consts from './const.js';
 
@@ -9,10 +10,59 @@ export function System() {
     return {
         atoms: [],
         farAtom: undefined,
-        bonds: []
+        bonds: [],
+        lattice: {
+            matrix: glm.mat3.create()
+        }
     };
 };
 
+export function calculateLattice(s){
+    var l = s.lattice.matrix;
+    var lattice_color = [0.1, 0.1, 0.1];
+    var lattice_radius = 0.03;
+    s.lattice.edges = [];
+    s.lattice.points = [];
+
+    function add_edge(p1, p2) {
+        s.lattice.edges.push({
+            posA: {x: p1[0], y: p1[1], z: p1[2]},
+            posB: {x: p2[0], y: p2[1], z: p2[2]},
+            radA: lattice_radius, radB: lattice_radius,
+            colA: {r: lattice_color[0], g: lattice_color[1], b: lattice_color[2]},
+            colB: {r: lattice_color[0], g: lattice_color[1], b: lattice_color[2]},
+            cutoff: 1.0
+        });
+    };
+
+    function add_point(p1) {
+        s.lattice.points.push({
+            position: p1,
+            color: lattice_color,
+            radius: lattice_radius
+        });
+    }
+
+    // Do calculation to find lattice unless specified
+    var o = [l[3], l[7], l[11]]; //offset
+    var v000 = glm.vec3.fromValues(0+o[0], 0+o[1], 0+o[2]);
+    var v100 = glm.vec3.fromValues(l[0]+o[0], l[1]+o[1], l[2]+o[2]);
+    var v010 = glm.vec3.fromValues(l[4]+o[0], l[5]+o[1], l[6]+o[2]);
+    var v001 = glm.vec3.fromValues(l[8]+o[0], l[9]+o[1], l[10]+o[2]);
+    var v110 = glm.vec3.fromValues(l[0]+l[4]+o[0], l[1]+l[5]+o[1], l[2]+l[6]+o[2]);
+    var v101 = glm.vec3.fromValues(l[0]+l[8]+o[0], l[1]+l[9]+o[1], l[2]+l[10]+o[2]);
+    var v011 = glm.vec3.fromValues(l[4]+l[8]+o[0], l[5]+l[9]+o[1], l[6]+l[10]+o[2]);
+    var v111 = glm.vec3.fromValues(l[0]+l[4]+l[8]+o[0], l[1]+l[5]+l[9]+o[1], l[2]+l[6]+l[10]+o[2]);
+    add_point(v000);
+    add_point(v100); add_point(v010); add_point(v001);
+    add_point(v110); add_point(v101); add_point(v011);
+    add_point(v111);
+
+    add_edge(v000, v100); add_edge(v000, v010); add_edge(v000, v001);
+    add_edge(v110, v010); add_edge(v110, v100); add_edge(v110, v111);
+    add_edge(v011, v111); add_edge(v011, v001); add_edge(v011, v010);
+    add_edge(v101, v001); add_edge(v101, v111); add_edge(v101, v100);
+}
 
 export function calculateBonds(s) {
     var bonds = [];
@@ -102,6 +152,10 @@ export function center(s) {
         atom.y -= shift.y;
         atom.z -= shift.z;
     }
+
+    s.lattice.matrix[3] -= shift.x;
+    s.lattice.matrix[7] -= shift.y;
+    s.lattice.matrix[11] -= shift.z;
 };
 
 

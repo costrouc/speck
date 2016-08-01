@@ -1,6 +1,9 @@
 "use strict";
 
+import * as glm from './gl-matrix/gl-matrix.js';
+import { config } from './presets.js';
 import { Renderer } from './renderer.js';
+import { extend } from './utils.js';
 import * as View from './view.js';
 import * as System from './system.js';
 
@@ -11,41 +14,114 @@ var lastX = 0.0;
 var lastY = 0.0;
 var buttonDown = false;
 
+var StructureViewProto = Object.create(HTMLElement.prototype);
+StructureViewProto.createdCallback = function() {
+    var root = this.createShadowRoot();
 
-export function Speck(canvas) {
-    this.canvas = canvas;
-    this.view =  View.View();
-    this.renderer = new Renderer(canvas, this.view.resolution, this.view.aoRes);
-    this.renderer.setResolution(this.view.resolution, this.view.aoRes);
-    this.system = null;
+    var canvas = document.createElement('canvas');
+    root.appendChild(canvas);
 
-    add_event_handlers(canvas, this.view);
+    this._view =  View.View();
+    add_event_handlers(canvas, this._view);
 
-    this.loadStructure = function(data) {
-        this.system = System.System();
-        for (var i = 0; i < data.length; i++) {
-            var atom = data[i];
-            var x = atom.position[0];
-            var y = atom.position[1];
-            var z = atom.position[2];
-            System.addAtom(this.system, atom.symbol, x, y, z);
+    // Rendering pipeline
+    this._renderer = new Renderer(canvas, this._view.resolution, this._view.aoRes);
+    this._renderer.setResolution(this._view.resolution, this._view.aoRes);
+    this._system = System.System();
+};
+
+StructureViewProto.loadStructure = function(data) {
+    // Expects objects of {lattice: 3x3, atoms: Nx3}
+    // lattice is not required
+    this._system = System.System();
+
+    var minx = Infinity,
+        miny = Infinity,
+        minz = Infinity,
+        maxx = -Infinity,
+        maxy = -Infinity,
+        maxz = -Infinity;
+
+    for (var i = 0; i < data.atoms.length; i++) {
+        var atom = data.atoms[i];
+        var x = atom.position[0];
+        var y = atom.position[1];
+        var z = atom.position[2];
+
+        if (x < minx) minx = x;
+        if (y < miny) miny = y;
+        if (z < minz) minz = z;
+        if (x > maxx) maxx = x;
+        if (y > maxy) maxy = y;
+        if (z > maxz) maxz = z;
+
+        System.addAtom(this._system, atom.symbol, x, y, z);
+    }
+
+    if (data.lattice) {
+        var l = data.lattice;
+        this._system.lattice.matrix = glm.mat4.fromValues(
+            l[0], l[1], l[2], 0,
+            l[3], l[4], l[5], 0,
+            l[6], l[7], l[8], 0,
+            0, 0, 0, 1);
+
+    } else {
+        this._system.lattice.matrix = glm.mat4.fromValues(
+            maxx-minx, 0, 0, minx,
+            0, maxy-miny, 0, miny,
+            0, 0, maxz-minz, minz,
+            0, 0, 0, 1);
+    }
+
+    System.center(this._system);
+
+    if (this.hasAttribute('lattice')) {
+        System.calculateLattice(this._system);
+        this._view.lattice = true;
+    }
+
+    if (this.hasAttribute('bonds')) {
+        System.calculateBonds(this._system);
+        this._view = extend(this._view, config.stickball);
+    }
+
+    View.resolve(this._view);
+    this._renderer.setSystem(this._system, this._view);
+    View.center(this._view, this._system);
+    needReset = true;
+
+    render(this._view, this._renderer);
+};
+
+
+StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newValue) {
+    if (attrName === "bonds") {
+        if (this.hasAttribute("bonds")) {
+            System.calculateBonds(this._system);
+            this._view = extend(this._view, config.stickball);
+
+        } else {
+            this._view = extend(this._view, config.ball);
         }
-        System.center(this.system);
-        System.calculateBonds(this.system);
-        this.renderer.setSystem(this.system, this.view);
-        View.center(this.view, this.system);
+        View.resolve(this._view);
+        this._renderer.setSystem(this._system, this._view);
         needReset = true;
-    };
-
-    this.render = function() {
-        if (this.system == null) {
-            throw "must loadStructure before rendering";
+    } else if (attrName === "lattice") {
+        if (this.hasAttribute("lattice")) {
+            System.calculateLattice(this._system);
+            this._view.lattice = true;
+        } else {
+            this._view.lattice = false;
         }
+        this._renderer.setSystem(this._system, this._view);
+        needReset = true;
+    }
+};
 
-        render(this.view, this.renderer);
-    };
-}
-
+var StructureView = document.registerElement('structure-view', {
+    prototype: StructureViewProto
+});
 
 function render(view, renderer) {
     if (needReset) {

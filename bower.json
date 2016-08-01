@@ -1,0 +1,26 @@
+{
+  "name": "speck",
+  "description": "Speck is a library for drawing molecular beautifully",
+  "main": "index.js",
+  "authors": [
+    "Chris Ostrouchov",
+    "wwwtyro"
+  ],
+  "license": "UNLICENSED",
+  "keywords": [
+    "Molecular",
+    "Visualization"
+  ],
+  "homepage": "chrisostrouchov.com",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "webcomponentsjs": "^0.7.22"
+  }
+}

@@ -7,47 +7,56 @@
     </head>
 
     <body>
-        <div id="render-container">
-            <canvas id="renderer-canvas"></canvas>
-        </div>
+        <structure-view bonds lattice id="structure"></structure-view>
     </body>
 
     <script>
      'use strict';
 
-     /* var xyz = []
-      * for (var i = 0; i < 10; i++) {
-      *     for (var j = 0; j < 10; j++) {
-      *         for (var k = 0; k < 10; k++) {
-      *             var symbol = 'N';
-      *             if (i % 2 == 0) {
-      *                 symbol = 'C';
-      *             }
-      *             xyz.push({'symbol': symbol, position: [i*3.0, j*3.0, k*3.0]});
-      *         }
-      *     }
-      * }*/
+     var xyz = []
+     for (var i = 0; i < 5; i++) {
+         for (var j = 0; j < 3; j++) {
+             for (var k = 0; k < 3; k++) {
+                 var symbol = 'N';
+                 if (i % 2 == 0) {
+                     symbol = 'C';
+                 } else if (i % 3 == 0) {
+                     symbol = 'O';
+                 }
+                 xyz.push({'symbol': symbol, position: [i*2.0, j*2.0, k*2.0]});
+             }
+         }
+     }
 
-     var xyz = [
-         {symbol: 'N', position: [24.33500,  0.79100, -23.23000]},
-         {symbol: 'C', position: [24.47200,  1.89700, -24.17600]},
-         {symbol: 'C', position: [25.68200,  2.79300, -23.90000]},
-         {symbol: 'O', position: [26.77700,  2.26500, -23.69400]},
-         {symbol: 'C', position: [23.15400,  2.69300, -24.37100]},
-         {symbol: 'C', position: [21.99300,  1.86500, -24.88700]},
-         {symbol: 'C', position: [21.97000,  1.39900, -26.20000]},
-         {symbol: 'C', position: [20.90700,  1.56500, -24.06800]},
-         {symbol: 'C', position: [20.91000,  0.62400, -26.67700]},
-         {symbol: 'C', position: [19.83500,  0.80100, -24.53700]},
-         {symbol: 'C', position: [19.84000,  0.33400, -25.84400]},
-         {symbol: 'O', position: [18.78800, -0.42000, -26.31500]},
-         {symbol: 'N', position: [25.49100,  4.13800, -23.90300]}
-     ];
+     /* var xyz = [
+      *     {symbol: 'N', position: [24.33500,  0.79100, -23.23000]},
+      *     {symbol: 'C', position: [24.47200,  1.89700, -24.17600]},
+      *     {symbol: 'C', position: [25.68200,  2.79300, -23.90000]},
+      *     {symbol: 'O', position: [26.77700,  2.26500, -23.69400]},
+      *     {symbol: 'C', position: [23.15400,  2.69300, -24.37100]},
+      *     {symbol: 'C', position: [21.99300,  1.86500, -24.88700]},
+      *     {symbol: 'C', position: [21.97000,  1.39900, -26.20000]},
+      *     {symbol: 'C', position: [20.90700,  1.56500, -24.06800]},
+      *     {symbol: 'C', position: [20.91000,  0.62400, -26.67700]},
+      *     {symbol: 'C', position: [19.83500,  0.80100, -24.53700]},
+      *     {symbol: 'C', position: [19.84000,  0.33400, -25.84400]},
+      *     {symbol: 'O', position: [18.78800, -0.42000, -26.31500]},
+      *     {symbol: 'N', position: [25.49100,  4.13800, -23.90300]}
+      * ];*/
+
+     /* var xyz = [
+      *     {symbol: 'N', position: [0.0, 0.0, 0.0]},
+      *     {symbol: 'N', position: [2.0, 0.0, 0.0]},
+      *     {symbol: 'N', position: [0.0, 2.0, 0.0]},
+      *     {symbol: 'N', position: [2.0, 2.0, 0.0]},
+      *     {symbol: 'N', position: [0.0, 0.0, 2.0]},
+      *     {symbol: 'N', position: [2.0, 0.0, 2.0]},
+      *     {symbol: 'N', position: [0.0, 2.0, 2.0]},
+      *     {symbol: 'N', position: [2.0, 2.0, 2.0]}
+      * ]*/
 
      /* basic initialization */
-     var imposterCanvas = document.getElementById("renderer-canvas");
-     var speck = new Speck.Speck(imposterCanvas);
-     speck.loadStructure(xyz);
-     speck.render();
+     var speck = document.getElementById("structure");
+     speck.loadStructure({atoms: xyz});
     </script>
 </html>

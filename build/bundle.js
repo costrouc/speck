@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.Speck = global.Speck || {})));
-}(this, function (exports) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (factory());
+}(this, function () { 'use strict';
 
 	/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -590,6 +590,48 @@
 	    out[13] = a[13];
 	    out[14] = a[14];
 	    out[15] = a[15];
+	    return out;
+	};
+
+	/**
+	 * Create a new mat4 with the given values
+	 *
+	 * @param {Number} m00 Component in column 0, row 0 position (index 0)
+	 * @param {Number} m01 Component in column 0, row 1 position (index 1)
+	 * @param {Number} m02 Component in column 0, row 2 position (index 2)
+	 * @param {Number} m03 Component in column 0, row 3 position (index 3)
+	 * @param {Number} m10 Component in column 1, row 0 position (index 4)
+	 * @param {Number} m11 Component in column 1, row 1 position (index 5)
+	 * @param {Number} m12 Component in column 1, row 2 position (index 6)
+	 * @param {Number} m13 Component in column 1, row 3 position (index 7)
+	 * @param {Number} m20 Component in column 2, row 0 position (index 8)
+	 * @param {Number} m21 Component in column 2, row 1 position (index 9)
+	 * @param {Number} m22 Component in column 2, row 2 position (index 10)
+	 * @param {Number} m23 Component in column 2, row 3 position (index 11)
+	 * @param {Number} m30 Component in column 3, row 0 position (index 12)
+	 * @param {Number} m31 Component in column 3, row 1 position (index 13)
+	 * @param {Number} m32 Component in column 3, row 2 position (index 14)
+	 * @param {Number} m33 Component in column 3, row 3 position (index 15)
+	 * @returns {mat4} A new mat4
+	 */
+	function fromValues$3(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33) {
+	    var out = new ARRAY_TYPE(16);
+	    out[0] = m00;
+	    out[1] = m01;
+	    out[2] = m02;
+	    out[3] = m03;
+	    out[4] = m10;
+	    out[5] = m11;
+	    out[6] = m12;
+	    out[7] = m13;
+	    out[8] = m20;
+	    out[9] = m21;
+	    out[10] = m22;
+	    out[11] = m23;
+	    out[12] = m30;
+	    out[13] = m31;
+	    out[14] = m32;
+	    out[15] = m33;
 	    return out;
 	};
 
@@ -1400,6 +1442,47 @@
 	    };
 	})();
 
+	var config = {
+	    ball: {
+	        atomScale: 0.6,
+	        relativeAtomScale: 1.0,
+	        bondScale: 0.5,
+	        ao: 0.75,
+	        aoRes: 256,
+	        brightness: 0.5,
+	        outline: 0.0,
+	        spf: 32,
+	        bonds: false,
+	        lattice: false,
+	        bondThreshold: 1.2,
+	        bondShade: 0.5,
+	        atomShade: 0.5,
+	        dofStrength: 0.0,
+	        dofPosition: 0.5,
+	        fxaa: 1
+	    },
+	    stickball: {
+	        atomScale: 0.24,
+	        relativeAtomScale: 0.64,
+	        bondScale: 0.5,
+	        bonds: true,
+	        bondThreshold: 1.2
+	    },
+	    toon: {
+	        ao: 0,
+	        spf: 0,
+	        brightness: 0.5,
+	        outline: 1
+	    },
+	    licorice: {
+	        atomScale: 0.1,
+	        relativeAtomScale: 0,
+	        bondScale: 1,
+	        bonds: true,
+	        bondThreshold: 1.2
+	    }
+	};
+
 	function buildAttribs(gl, layout) {
 	    var attribs = {};
 	    for (var key in layout) {
@@ -1853,6 +1936,19 @@
 	    'Uuo': {'symbol': 'Uuo', 'name':           'Uuo', 'mass': 296.00000000, 'radius':  1.5700, 'color': [0.922, 0.000, 0.149], 'number': 118}
 	};
 
+	function extend(out) {
+	    out = out || {};
+	    for (var i = 1; i < arguments.length; i++) {
+	        if (!arguments[i])
+	            continue;
+	        for (var key in arguments[i]) {
+	            if (arguments[i].hasOwnProperty(key))
+	                out[key] = arguments[i][key];
+	        }
+	    }
+	    return out;
+	};
+
 	var MIN_ATOM_RADIUS = Infinity;
 	var MAX_ATOM_RADIUS = -Infinity;
 
@@ -1871,31 +1967,16 @@
 
 
 	function View() {
-	    return {
+	    return extend({
 	        aspect: 1.0,
 	        zoom: 0.125,
 	        translation: {
 	            x: 0.0,
 	            y: 0.0
 	        },
-	        atomScale: 0.6,
-	        relativeAtomScale: 1.0,
-	        bondScale: 0.5,
 	        rotation: create$3(),
-	        ao: 0.75,
-	        aoRes: 256,
-	        brightness: 0.5,
-	        outline: 0.0,
-	        spf: 32,
-	        bonds: false,
-	        bondThreshold: 1.2,
-	        bondShade: 0.5,
-	        atomShade: 0.5,
-	        resolution: 768,
-	        dofStrength: 0.0,
-	        dofPosition: 0.5,
-	        fxaa: 1
-	    };
+	        resolution: 768
+	    }, config.ball);
 	};
 
 
@@ -1997,10 +2078,60 @@
 	    return {
 	        atoms: [],
 	        farAtom: undefined,
-	        bonds: []
+	        bonds: [],
+	        lattice: {
+	            matrix: create$2()
+	        }
 	    };
 	};
 
+	function calculateLattice(s){
+	    var l = s.lattice.matrix;
+	    var lattice_color = [0.1, 0.1, 0.1];
+	    var lattice_radius = 0.03;
+	    s.lattice.edges = [];
+	    s.lattice.points = [];
+
+	    function add_edge(p1, p2) {
+	        s.lattice.edges.push({
+	            posA: {x: p1[0], y: p1[1], z: p1[2]},
+	            posB: {x: p2[0], y: p2[1], z: p2[2]},
+	            radA: lattice_radius, radB: lattice_radius,
+	            colA: {r: lattice_color[0], g: lattice_color[1], b: lattice_color[2]},
+	            colB: {r: lattice_color[0], g: lattice_color[1], b: lattice_color[2]},
+	            cutoff: 1.0
+	        });
+	    };
+
+	    function add_point(p1) {
+	        s.lattice.points.push({
+	            position: p1,
+	            color: lattice_color,
+	            radius: lattice_radius
+	        });
+	    }
+
+	    // Do calculation to find lattice unless specified
+	    var o = [l[3], l[7], l[11]]; //offset
+	    console.log(o);
+	    var v000 = fromValues$5(0+o[0], 0+o[1], 0+o[2]);
+	    var v100 = fromValues$5(l[0]+o[0], l[1]+o[1], l[2]+o[2]);
+	    var v010 = fromValues$5(l[4]+o[0], l[5]+o[1], l[6]+o[2]);
+	    var v001 = fromValues$5(l[8]+o[0], l[9]+o[1], l[10]+o[2]);
+	    var v110 = fromValues$5(l[0]+l[4]+o[0], l[1]+l[5]+o[1], l[2]+l[6]+o[2]);
+	    var v101 = fromValues$5(l[0]+l[8]+o[0], l[1]+l[9]+o[1], l[2]+l[10]+o[2]);
+	    var v011 = fromValues$5(l[4]+l[8]+o[0], l[5]+l[9]+o[1], l[6]+l[10]+o[2]);
+	    var v111 = fromValues$5(l[0]+l[4]+l[8]+o[0], l[1]+l[5]+l[9]+o[1], l[2]+l[6]+l[10]+o[2]);
+	    add_point(v000);
+	    add_point(v100); add_point(v010); add_point(v001);
+	    add_point(v110); add_point(v101); add_point(v011);
+	    add_point(v111);
+
+	    add_edge(v000, v100); add_edge(v000, v010); add_edge(v000, v001);
+	    add_edge(v110, v010); add_edge(v110, v100); add_edge(v110, v111);
+	    add_edge(v011, v111); add_edge(v011, v001); add_edge(v011, v010);
+	    add_edge(v101, v001); add_edge(v101, v111); add_edge(v101, v100);
+	}
 
 	function calculateBonds(s) {
 	    var bonds = [];
@@ -2090,6 +2221,10 @@
 	        atom.y -= shift.y;
 	        atom.z -= shift.z;
 	    }
+
+	    s.lattice.matrix[3] -= shift.x;
+	    s.lattice.matrix[7] -= shift.y;
+	    s.lattice.matrix[11] -= shift.z;
 	};
 
 
@@ -2309,6 +2444,16 @@
 	            color.push.apply(color, make36([c[0], c[1], c[2]]));
 	        }
 
+	        if (view.lattice && system.lattice.points) {
+	            for (var i = 0; i < system.lattice.points.length; i++) {
+	                imposter.push.apply(imposter, position);
+	                var a = system.lattice.points[i];
+	                position$$.push.apply(position$$, make36(a.position));
+	                radius.push.apply(radius, make36([a.radius]));
+	                color.push.apply(color, make36(a.color));
+	            }
+	        }
+
 	        attribs.aImposter.buffer.set(new Float32Array(imposter));
 	        attribs.aPosition.buffer.set(new Float32Array(position$$));
 	        attribs.aRadius.buffer.set(new Float32Array(radius));
@@ -2356,22 +2501,34 @@
 	                    colb.push.apply(colb, make36([b.colB.r, b.colB.g, b.colB.b]));
 	                }
 
-	                attribs.aImposter.buffer.set(new Float32Array(imposter));
-	                attribs.aPosA.buffer.set(new Float32Array(posa));
-	                attribs.aPosB.buffer.set(new Float32Array(posb));
-	                attribs.aRadA.buffer.set(new Float32Array(rada));
-	                attribs.aRadB.buffer.set(new Float32Array(radb));
-	                attribs.aColA.buffer.set(new Float32Array(cola));
-	                attribs.aColB.buffer.set(new Float32Array(colb));
+	                if (view.lattice && system.lattice.edges) {
+	                    for (var i = 0; i < system.lattice.edges.length; i++) {
+	                        var b = system.lattice.edges[i];
+	                        imposter.push.apply(imposter, position);
+	                        posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
+	                        posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
+	                        rada.push.apply(rada, make36([b.radA]));
+	                        radb.push.apply(radb, make36([b.radB]));
+	                        cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
+	                        colb.push.apply(colb, make36([b.colB.r, b.colB.g, b.colB.b]));
+	                    }
+	                }
 
-	                var count = imposter.length / 9;
+	                if (imposter.length > 0) { //Ensure that there are actually bonds
+	                    attribs.aImposter.buffer.set(new Float32Array(imposter));
+	                    attribs.aPosA.buffer.set(new Float32Array(posa));
+	                    attribs.aPosB.buffer.set(new Float32Array(posb));
+	                    attribs.aRadA.buffer.set(new Float32Array(rada));
+	                    attribs.aRadB.buffer.set(new Float32Array(radb));
+	                    attribs.aColA.buffer.set(new Float32Array(cola));
+	                    attribs.aColB.buffer.set(new Float32Array(colb));
 
-	                rBonds = new Renderable(gl, progBonds, attribs, count);
+	                    var count = imposter.length / 9;
 
+	                    rBonds = new Renderable(gl, progBonds, attribs, count);
+	                }
 	            }
-
 	        }
-
 	    };
 
 	    self.reset = function() {
@@ -2653,41 +2810,114 @@
 	var lastY = 0.0;
 	var buttonDown = false;
 
+	var StructureViewProto = Object.create(HTMLElement.prototype);
+	StructureViewProto.createdCallback = function() {
+	    var root = this.createShadowRoot();
 
-	function Speck(canvas) {
-	    this.canvas = canvas;
-	    this.view =  View();
-	    this.renderer = new Renderer(canvas, this.view.resolution, this.view.aoRes);
-	    this.renderer.setResolution(this.view.resolution, this.view.aoRes);
-	    this.system = null;
+	    var canvas = document.createElement('canvas');
+	    root.appendChild(canvas);
 
-	    add_event_handlers(canvas, this.view);
+	    this._view =  View();
+	    add_event_handlers(canvas, this._view);
 
-	    this.loadStructure = function(data) {
-	        this.system = System();
-	        for (var i = 0; i < data.length; i++) {
-	            var atom = data[i];
-	            var x = atom.position[0];
-	            var y = atom.position[1];
-	            var z = atom.position[2];
-	            addAtom(this.system, atom.symbol, x, y, z);
+	    // Rendering pipeline
+	    this._renderer = new Renderer(canvas, this._view.resolution, this._view.aoRes);
+	    this._renderer.setResolution(this._view.resolution, this._view.aoRes);
+	    this._system = System();
+	};
+
+	StructureViewProto.loadStructure = function(data) {
+	    // Expects objects of {lattice: 3x3, atoms: Nx3}
+	    // lattice is not required
+	    this._system = System();
+
+	    var minx = Infinity,
+	        miny = Infinity,
+	        minz = Infinity,
+	        maxx = -Infinity,
+	        maxy = -Infinity,
+	        maxz = -Infinity;
+
+	    for (var i = 0; i < data.atoms.length; i++) {
+	        var atom = data.atoms[i];
+	        var x = atom.position[0];
+	        var y = atom.position[1];
+	        var z = atom.position[2];
+
+	        if (x < minx) minx = x;
+	        if (y < miny) miny = y;
+	        if (z < minz) minz = z;
+	        if (x > maxx) maxx = x;
+	        if (y > maxy) maxy = y;
+	        if (z > maxz) maxz = z;
+
+	        addAtom(this._system, atom.symbol, x, y, z);
+	    }
+
+	    if (data.lattice) {
+	        var l = data.lattice;
+	        this._system.lattice.matrix = fromValues$3(
+	            l[0], l[1], l[2], 0,
+	            l[3], l[4], l[5], 0,
+	            l[6], l[7], l[8], 0,
+	            0, 0, 0, 1);
+
+	    } else {
+	        this._system.lattice.matrix = fromValues$3(
+	            maxx-minx, 0, 0, minx,
+	            0, maxy-miny, 0, miny,
+	            0, 0, maxz-minz, minz,
+	            0, 0, 0, 1);
+	    }
+
+	    center$1(this._system);
+
+	    if (this.hasAttribute('lattice')) {
+	        calculateLattice(this._system);
+	        this._view.lattice = true;
+	    }
+
+	    if (this.hasAttribute('bonds')) {
+	        calculateBonds(this._system);
+	        this._view = extend(this._view, config.stickball);
+	    }
+
+	    resolve(this._view);
+	    this._renderer.setSystem(this._system, this._view);
+	    center(this._view, this._system);
+	    needReset = true;
+
+	    render(this._view, this._renderer);
+	};
+
+
+	StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newValue) {
+	    if (attrName === "bonds") {
+	        if (this.hasAttribute("bonds")) {
+	            calculateBonds(this._system);
+	            this._view = extend(this._view, config.stickball);
+
+	        } else {
+	            this._view = extend(this._view, config.ball);
 	        }
-	        center$1(this.system);
-	        calculateBonds(this.system);
-	        this.renderer.setSystem(this.system, this.view);
-	        center(this.view, this.system);
+	        resolve(this._view);
+	        this._renderer.setSystem(this._system, this._view);
 	        needReset = true;
-	    };
-
-	    this.render = function() {
-	        if (this.system == null) {
-	            throw "must loadStructure before rendering";
+	    } else if (attrName === "lattice") {
+	        if (this.hasAttribute("lattice")) {
+	            calculateLattice(this._system);
+	            this._view.lattice = true;
+	        } else {
+	            this._view.lattice = false;
 	        }
+	        this._renderer.setSystem(this._system, this._view);
+	        needReset = true;
+	    }
+	};
 
-	        render(this.view, this.renderer);
-	    };
-	}
-
+	var StructureView = document.registerElement('structure-view', {
+	    prototype: StructureViewProto
+	});
 
 	function render(view, renderer) {
 	    if (needReset) {
@@ -2758,9 +2988,5 @@
 	        e.preventDefault();
 	    });
 	}
-
-	exports.Speck = Speck;
-
-	Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

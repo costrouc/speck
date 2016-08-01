@@ -1,5 +1,5 @@
 export var config = {
-    default: {
+    ball: {
         atomScale: 0.6,
         relativeAtomScale: 1.0,
         bondScale: 0.5,
@@ -9,6 +9,7 @@ export var config = {
         outline: 0.0,
         spf: 32,
         bonds: false,
+        lattice: false,
         bondThreshold: 1.2,
         bondShade: 0.5,
         atomShade: 0.5,

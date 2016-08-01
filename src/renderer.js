@@ -198,6 +198,16 @@ export function Renderer(canvas, resolution, aoResolution) {
             color.push.apply(color, make36([c[0], c[1], c[2]]));
         }
 
+        if (view.lattice && system.lattice.points) {
+            for (var i = 0; i < system.lattice.points.length; i++) {
+                imposter.push.apply(imposter, cube.position);
+                var a = system.lattice.points[i];
+                position.push.apply(position, make36(a.position));
+                radius.push.apply(radius, make36([a.radius]));
+                color.push.apply(color, make36(a.color));
+            }
+        }
+
         attribs.aImposter.buffer.set(new Float32Array(imposter));
         attribs.aPosition.buffer.set(new Float32Array(position));
         attribs.aRadius.buffer.set(new Float32Array(radius));
@@ -245,22 +255,34 @@ export function Renderer(canvas, resolution, aoResolution) {
                     colb.push.apply(colb, make36([b.colB.r, b.colB.g, b.colB.b]));
                 }
 
-                attribs.aImposter.buffer.set(new Float32Array(imposter));
-                attribs.aPosA.buffer.set(new Float32Array(posa));
-                attribs.aPosB.buffer.set(new Float32Array(posb));
-                attribs.aRadA.buffer.set(new Float32Array(rada));
-                attribs.aRadB.buffer.set(new Float32Array(radb));
-                attribs.aColA.buffer.set(new Float32Array(cola));
-                attribs.aColB.buffer.set(new Float32Array(colb));
+                if (view.lattice && system.lattice.edges) {
+                    for (var i = 0; i < system.lattice.edges.length; i++) {
+                        var b = system.lattice.edges[i];
+                        imposter.push.apply(imposter, cube.position);
+                        posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
+                        posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
+                        rada.push.apply(rada, make36([b.radA]));
+                        radb.push.apply(radb, make36([b.radB]));
+                        cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
+                        colb.push.apply(colb, make36([b.colB.r, b.colB.g, b.colB.b]));
+                    }
+                }
 
-                var count = imposter.length / 9;
+                if (imposter.length > 0) { //Ensure that there are actually bonds
+                    attribs.aImposter.buffer.set(new Float32Array(imposter));
+                    attribs.aPosA.buffer.set(new Float32Array(posa));
+                    attribs.aPosB.buffer.set(new Float32Array(posb));
+                    attribs.aRadA.buffer.set(new Float32Array(rada));
+                    attribs.aRadB.buffer.set(new Float32Array(radb));
+                    attribs.aColA.buffer.set(new Float32Array(cola));
+                    attribs.aColB.buffer.set(new Float32Array(colb));
 
-                rBonds = new webgl.Renderable(gl, progBonds, attribs, count);
+                    var count = imposter.length / 9;
 
+                    rBonds = new webgl.Renderable(gl, progBonds, attribs, count);
+                }
             }
-
         }
-
     };
 
     self.reset = function() {
