@@ -179,7 +179,7 @@ export function Renderer(canvas, resolution, aoResolution) {
             return out;
         }
 
-        // Atoms
+        // "Atoms" (Spheres)
         var attribs = webgl.buildAttribs(gl, {
             aImposter: 3, aPosition: 3, aRadius: 1, aColor: 3
         });
@@ -208,43 +208,43 @@ export function Renderer(canvas, resolution, aoResolution) {
             }
         }
 
-        attribs.aImposter.buffer.set(new Float32Array(imposter));
-        attribs.aPosition.buffer.set(new Float32Array(position));
-        attribs.aRadius.buffer.set(new Float32Array(radius));
-        attribs.aColor.buffer.set(new Float32Array(color));
+        if (imposter.length > 0) { //ensure there are atoms
+            attribs.aImposter.buffer.set(new Float32Array(imposter));
+            attribs.aPosition.buffer.set(new Float32Array(position));
+            attribs.aRadius.buffer.set(new Float32Array(radius));
+            attribs.aColor.buffer.set(new Float32Array(color));
 
-        var count = imposter.length / 9;
+            var count = imposter.length / 9;
 
-        rAtoms = new webgl.Renderable(gl, progAtoms, attribs, count);
+            rAtoms = new webgl.Renderable(gl, progAtoms, attribs, count);
+        }
 
-        // Bonds
+        // "Bonds" (Cylinders)
 
-        if (view.bonds) {
-
+        if (view.bonds || view.lattice) {
             rBonds = null;
 
-            if (system.bonds.length > 0) {
+            var attribs = webgl.buildAttribs(gl, {
+                aImposter: 3,
+                aPosA: 3,
+                aPosB: 3,
+                aRadius: 1,
+                aRadA: 1,
+                aRadB: 1,
+                aColA: 3,
+                aColB: 3
+            });
 
-                var attribs = webgl.buildAttribs(gl, {
-                    aImposter: 3,
-                    aPosA: 3,
-                    aPosB: 3,
-                    aRadius: 1,
-                    aRadA: 1,
-                    aRadB: 1,
-                    aColA: 3,
-                    aColB: 3
-                });
+            var imposter = [];
+            var posa = [];
+            var posb = [];
+            var radius = [];
+            var rada = [];
+            var radb = [];
+            var cola = [];
+            var colb = [];
 
-                var imposter = [];
-                var posa = [];
-                var posb = [];
-                var radius = [];
-                var rada = [];
-                var radb = [];
-                var cola = [];
-                var colb = [];
-
+            if (view.bonds && system.bonds.length > 0) {
                 for (var i = 0; i < system.bonds.length; i++) {
                     var b = system.bonds[i];
                     if (b.cutoff > view.bondThreshold) break;
@@ -257,35 +257,35 @@ export function Renderer(canvas, resolution, aoResolution) {
                     cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
                     colb.push.apply(colb, make36([b.colB.r, b.colB.g, b.colB.b]));
                 }
+            }
 
-                if (view.lattice && system.lattice.edges) {
-                    for (var i = 0; i < system.lattice.edges.length; i++) {
-                        var b = system.lattice.edges[i];
-                        imposter.push.apply(imposter, cube.position);
-                        posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
-                        posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
-                        radius.push.apply(radius, make36([0.5 * View.getBondRadius(view)]));
-                        rada.push.apply(rada, make36([b.radA]));
-                        radb.push.apply(radb, make36([b.radB]));
-                        cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
-                        colb.push.apply(colb, make36([b.colB.r, b.colB.g, b.colB.b]));
-                    }
+            if (view.lattice && system.lattice.edges) {
+                for (var i = 0; i < system.lattice.edges.length; i++) {
+                    var b = system.lattice.edges[i];
+                    imposter.push.apply(imposter, cube.position);
+                    posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
+                    posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
+                    radius.push.apply(radius, make36([0.5 * View.getBondRadius(view)]));
+                    rada.push.apply(rada, make36([b.radA]));
+                    radb.push.apply(radb, make36([b.radB]));
+                    cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
+                    colb.push.apply(colb, make36([b.colB.r, b.colB.g, b.colB.b]));
                 }
+            }
 
-                if (imposter.length > 0) { //Ensure that there are actually bonds
-                    attribs.aImposter.buffer.set(new Float32Array(imposter));
-                    attribs.aPosA.buffer.set(new Float32Array(posa));
-                    attribs.aPosB.buffer.set(new Float32Array(posb));
-                    attribs.aRadius.buffer.set(new Float32Array(radius));
-                    attribs.aRadA.buffer.set(new Float32Array(rada));
-                    attribs.aRadB.buffer.set(new Float32Array(radb));
-                    attribs.aColA.buffer.set(new Float32Array(cola));
-                    attribs.aColB.buffer.set(new Float32Array(colb));
+            if (imposter.length > 0) { //Ensure that there are actually bonds
+                attribs.aImposter.buffer.set(new Float32Array(imposter));
+                attribs.aPosA.buffer.set(new Float32Array(posa));
+                attribs.aPosB.buffer.set(new Float32Array(posb));
+                attribs.aRadius.buffer.set(new Float32Array(radius));
+                attribs.aRadA.buffer.set(new Float32Array(rada));
+                attribs.aRadB.buffer.set(new Float32Array(radb));
+                attribs.aColA.buffer.set(new Float32Array(cola));
+                attribs.aColB.buffer.set(new Float32Array(colb));
 
-                    var count = imposter.length / 9;
+                var count = imposter.length / 9;
 
-                    rBonds = new webgl.Renderable(gl, progBonds, attribs, count);
-                }
+                rBonds = new webgl.Renderable(gl, progBonds, attribs, count);
             }
         }
     };
@@ -350,7 +350,7 @@ export function Renderer(canvas, resolution, aoResolution) {
         progAtoms.setUniform("uAtomShade", "1f", view.atomShade);
         rAtoms.render();
 
-        if (view.bonds && rBonds != null) {
+        if ((view.bonds || view.lattice) && rBonds != null) {
             fbSceneColor.bind();
             progBonds.setUniform("uProjection", "Matrix4fv", false, projection);
             progBonds.setUniform("uView", "Matrix4fv", false, viewMat);
@@ -395,7 +395,7 @@ export function Renderer(canvas, resolution, aoResolution) {
         progAtoms.setUniform("uAtomShade", "1f", view.atomShade);
         rAtoms.render();
 
-        if (view.bonds && rBonds != null) {
+        if ((view.bonds || view.lattice) && rBonds != null) {
             fbSceneNormal.bind();
             progBonds.setUniform("uProjection", "Matrix4fv", false, projection);
             progBonds.setUniform("uView", "Matrix4fv", false, viewMat);
@@ -448,7 +448,7 @@ export function Renderer(canvas, resolution, aoResolution) {
         progAtoms.setUniform("uAtomShade", "1f", view.atomShade);
         rAtoms.render();
 
-        if (view.bonds && rBonds != null) {
+        if ((view.bonds || view.lattice) && rBonds != null) {
             progBonds.setUniform("uProjection", "Matrix4fv", false, projection);
             progBonds.setUniform("uView", "Matrix4fv", false, viewMat);
             progBonds.setUniform("uModel", "Matrix4fv", false, model);

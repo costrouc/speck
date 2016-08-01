@@ -83,7 +83,7 @@ StructureViewProto.loadStructure = function(data) {
 
     if (this.hasAttribute('bonds')) {
         System.calculateBonds(this._system);
-        this._view = extend(this._view, config.stickball);
+        this._view = extend({}, this._view, config.stickball);
     }
 
     View.resolve(this._view);
@@ -99,10 +99,9 @@ StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newVa
     if (attrName === "bonds") {
         if (this.hasAttribute("bonds")) {
             System.calculateBonds(this._system);
-            this._view = extend(this._view, config.stickball);
-
+            this._view = extend({}, this._view, config.stickball);
         } else {
-            this._view = extend(this._view, config.ball);
+            this._view = extend({}, this._view, config.ball);
         }
         View.resolve(this._view);
         this._renderer.setSystem(this._system, this._view);
@@ -114,6 +113,7 @@ StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newVa
         } else {
             this._view.lattice = false;
         }
+        View.resolve(this._view);
         this._renderer.setSystem(this._system, this._view);
         needReset = true;
     }
