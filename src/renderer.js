@@ -229,6 +229,7 @@ export function Renderer(canvas, resolution, aoResolution) {
                     aImposter: 3,
                     aPosA: 3,
                     aPosB: 3,
+                    aRadius: 1,
                     aRadA: 1,
                     aRadB: 1,
                     aColA: 3,
@@ -238,6 +239,7 @@ export function Renderer(canvas, resolution, aoResolution) {
                 var imposter = [];
                 var posa = [];
                 var posb = [];
+                var radius = [];
                 var rada = [];
                 var radb = [];
                 var cola = [];
@@ -249,6 +251,7 @@ export function Renderer(canvas, resolution, aoResolution) {
                     imposter.push.apply(imposter, cube.position);
                     posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
                     posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
+                    radius.push.apply(radius, make36([2.5 * View.getBondRadius(view)]));
                     rada.push.apply(rada, make36([b.radA]));
                     radb.push.apply(radb, make36([b.radB]));
                     cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
@@ -261,6 +264,7 @@ export function Renderer(canvas, resolution, aoResolution) {
                         imposter.push.apply(imposter, cube.position);
                         posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
                         posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
+                        radius.push.apply(radius, make36([0.5 * View.getBondRadius(view)]));
                         rada.push.apply(rada, make36([b.radA]));
                         radb.push.apply(radb, make36([b.radB]));
                         cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
@@ -272,6 +276,7 @@ export function Renderer(canvas, resolution, aoResolution) {
                     attribs.aImposter.buffer.set(new Float32Array(imposter));
                     attribs.aPosA.buffer.set(new Float32Array(posa));
                     attribs.aPosB.buffer.set(new Float32Array(posb));
+                    attribs.aRadius.buffer.set(new Float32Array(radius));
                     attribs.aRadA.buffer.set(new Float32Array(rada));
                     attribs.aRadB.buffer.set(new Float32Array(radb));
                     attribs.aColA.buffer.set(new Float32Array(cola));
@@ -355,7 +360,6 @@ export function Renderer(canvas, resolution, aoResolution) {
             progBonds.setUniform("uBottomLeft", "2fv", [rect.left, rect.bottom]);
             progBonds.setUniform("uTopRight", "2fv", [rect.right, rect.top]);
             progBonds.setUniform("uRes", "1f", resolution);
-            progBonds.setUniform("uBondRadius", "1f", 2.5 * View.getBondRadius(view));
             progBonds.setUniform("uBondShade", "1f", view.bondShade);
             progBonds.setUniform("uAtomScale", "1f", 2.5 * view.atomScale);
             progBonds.setUniform("uRelativeAtomScale", "1f", view.relativeAtomScale);
@@ -401,7 +405,6 @@ export function Renderer(canvas, resolution, aoResolution) {
             progBonds.setUniform("uBottomLeft", "2fv", [rect.left, rect.bottom]);
             progBonds.setUniform("uTopRight", "2fv", [rect.right, rect.top]);
             progBonds.setUniform("uRes", "1f", resolution);
-            progBonds.setUniform("uBondRadius", "1f", 2.5 * View.getBondRadius(view));
             progBonds.setUniform("uBondShade", "1f", view.bondShade);
             progBonds.setUniform("uAtomScale", "1f", 2.5 * view.atomScale);
             progBonds.setUniform("uRelativeAtomScale", "1f", view.relativeAtomScale);
@@ -454,7 +457,6 @@ export function Renderer(canvas, resolution, aoResolution) {
             progBonds.setUniform("uBottomLeft", "2fv", [rect.left, rect.bottom]);
             progBonds.setUniform("uTopRight", "2fv", [rect.right, rect.top]);
             progBonds.setUniform("uRes", "1f", aoResolution);
-            progBonds.setUniform("uBondRadius", "1f", 2.5 * View.getBondRadius(view));
             progBonds.setUniform("uBondShade", "1f", view.bondShade);
             progBonds.setUniform("uAtomScale", "1f", 2.5 * view.atomScale);
             progBonds.setUniform("uRelativeAtomScale", "1f", view.relativeAtomScale);

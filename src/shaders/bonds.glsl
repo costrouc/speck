@@ -4,6 +4,7 @@ precision highp float;
 attribute vec3 aImposter;
 attribute vec3 aPosA;
 attribute vec3 aPosB;
+attribute float aRadius;
 attribute float aRadA;
 attribute float aRadB;
 attribute vec3 aColA;
@@ -13,7 +14,6 @@ uniform mat4 uView;
 uniform mat4 uProjection;
 uniform mat4 uModel;
 uniform mat4 uRotation;
-uniform float uBondRadius;
 uniform float uAtomScale;
 uniform float uRelativeAtomScale;
 
@@ -41,7 +41,7 @@ mat3 alignVector(vec3 a, vec3 b) {
 }
 
 void main() {
-    vRadius = uBondRadius;
+    vRadius = aRadius;
     vec3 pos = vec3(aImposter);
     // Scale the box in x and z to be bond-radius.
     pos = pos * vec3(vRadius, 1, vRadius);

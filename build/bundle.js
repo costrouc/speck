@@ -1739,7 +1739,7 @@
 
 	var atoms = "#version 100\nprecision highp float;\n\nattribute vec3 aImposter;\nattribute vec3 aPosition;\nattribute float aRadius;\nattribute vec3 aColor;\n\nuniform mat4 uView;\nuniform mat4 uProjection;\nuniform mat4 uModel;\nuniform float uAtomScale;\nuniform float uRelativeAtomScale;\nuniform float uAtomShade;\n\nvarying vec3 vColor;\nvarying vec3 vPosition;\nvarying float vRadius;\n\nvoid main() {\n    vRadius = uAtomScale * (1.0 + (aRadius - 1.0) * uRelativeAtomScale);\n    gl_Position = uProjection * uView * uModel * vec4(vRadius * aImposter + aPosition, 1.0);\n    vColor = mix(aColor, vec3(1,1,1), uAtomShade);\n    vPosition = vec3(uModel * vec4(aPosition, 1));\n}\n\n\n// __split__\n\n\n#version 100\n#extension GL_EXT_frag_depth: enable\nprecision highp float;\n\nuniform vec2 uBottomLeft;\nuniform vec2 uTopRight;\nuniform float uRes;\nuniform float uDepth;\nuniform int uMode;\n\nvarying vec3 vPosition;\nvarying float vRadius;\nvarying vec3 vColor;\n\nvec2 res = vec2(uRes, uRes);\n\nfloat raySphereIntersect(vec3 r0, vec3 rd) {\n    float a = dot(rd, rd);\n    vec3 s0_r0 = r0 - vPosition;\n    float b = 2.0 * dot(rd, s0_r0);\n    float c = dot(s0_r0, s0_r0) - (vRadius * vRadius);\n    float disc = b*b - 4.0*a*c;\n    if (disc <= 0.0) {\n        return -1.0;\n    }\n    return (-b - sqrt(disc))/(2.0*a);\n}\n\nvoid main() {\n    vec3 r0 = vec3(uBottomLeft + (gl_FragCoord.xy/res) * (uTopRight - uBottomLeft), 0.0);\n    vec3 rd = vec3(0, 0, -1);\n    float t = raySphereIntersect(r0, rd);\n    if (t < 0.0) {\n        discard;\n    }\n    vec3 coord = r0 + rd * t;\n    vec3 normal = normalize(coord - vPosition);\n    if (uMode == 0) {\n        gl_FragColor = vec4(vColor, 1);\n    } else if (uMode == 1) {\n        gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0);\n    }\n    gl_FragDepthEXT = -coord.z/uDepth;\n}\n";
 
-	var bonds = "#version 100\nprecision highp float;\n\nattribute vec3 aImposter;\nattribute vec3 aPosA;\nattribute vec3 aPosB;\nattribute float aRadA;\nattribute float aRadB;\nattribute vec3 aColA;\nattribute vec3 aColB;\n\nuniform mat4 uView;\nuniform mat4 uProjection;\nuniform mat4 uModel;\nuniform mat4 uRotation;\nuniform float uBondRadius;\nuniform float uAtomScale;\nuniform float uRelativeAtomScale;\n\nvarying vec3 vNormal;\nvarying vec3 vPosA, vPosB;\nvarying float vRadA, vRadB;\nvarying vec3 vColA, vColB;\nvarying float vRadius;\n\nmat3 alignVector(vec3 a, vec3 b) {\n    vec3 v = cross(a, b);\n    float s = length(v);\n    float c = dot(a, b);\n    mat3 I = mat3(\n        1, 0, 0,\n        0, 1, 0,\n        0, 0, 1\n    );\n    mat3 vx = mat3(\n        0, v.z, -v.y,\n        -v.z, 0, v.x,\n        v.y, -v.x, 0\n    );\n    return I + vx + vx * vx * ((1.0 - c) / (s * s));\n}\n\nvoid main() {\n    vRadius = uBondRadius;\n    vec3 pos = vec3(aImposter);\n    // Scale the box in x and z to be bond-radius.\n    pos = pos * vec3(vRadius, 1, vRadius);\n    // Shift the origin-centered cube so that the bottom is at the origin.\n    pos = pos + vec3(0, 1, 0);\n    // Stretch the box in y so that it is the length of the bond.\n    pos = pos * vec3(1, length(aPosA - aPosB) * 0.5, 1);\n    // Find the rotation that aligns vec3(0, 1, 0) with vec3(uPosB - uPosA) and apply it.\n    vec3 a = normalize(vec3(-0.000001, 1.000001, 0.000001));\n    vec3 b = normalize(aPosB - aPosA);\n    mat3 R = alignVector(a, b);\n    pos = R * pos;\n    // Shift the cube so that the bottom is centered at the middle of atom A.\n    pos = pos + aPosA;\n\n    vec4 position = uModel * vec4(pos, 1);\n    gl_Position = uProjection * uView * position;\n    vPosA = aPosA;\n    vPosB = aPosB;\n    vRadA = uAtomScale * (1.0 + (aRadA - 1.0) * uRelativeAtomScale);\n    vRadB = uAtomScale * (1.0 + (aRadB - 1.0) * uRelativeAtomScale);\n    vColA = aColA;\n    vColB = aColB;\n}\n\n\n// __split__\n\n\n#version 100\n#extension GL_EXT_frag_depth: enable\nprecision highp float;\n\nuniform mat4 uRotation;\nuniform vec2 uBottomLeft;\nuniform vec2 uTopRight;\nuniform float uDepth;\nuniform float uRes;\nuniform float uBondShade;\nuniform int uMode;\n\nvarying vec3 vPosA, vPosB;\nvarying float vRadA, vRadB;\nvarying vec3 vColA, vColB;\nvarying float vRadius;\n\nmat3 alignVector(vec3 a, vec3 b) {\n    vec3 v = cross(a, b);\n    float s = length(v);\n    float c = dot(a, b);\n    mat3 I = mat3(\n        1, 0, 0,\n        0, 1, 0,\n        0, 0, 1\n    );\n    mat3 vx = mat3(\n        0, v.z, -v.y,\n        -v.z, 0, v.x,\n        v.y, -v.x, 0\n    );\n    return I + vx + vx * vx * ((1.0 - c) / (s * s));\n}\n\nvoid main() {\n\n    vec2 res = vec2(uRes, uRes);\n    vec3 r0 = vec3(uBottomLeft + (gl_FragCoord.xy/res) * (uTopRight - uBottomLeft), uDepth/2.0);\n    vec3 rd = vec3(0, 0, -1);\n\n    vec3 i = normalize(vPosB - vPosA);\n         i = vec3(uRotation * vec4(i, 0));\n    vec3 j = normalize(vec3(-0.000001, 1.000001, 0.000001));\n    mat3 R = alignVector(i, j);\n\n    vec3 r0p = r0 - vec3(uRotation * vec4(vPosA, 0));\n    r0p = R * r0p;\n    vec3 rdp = R * rd;\n\n    float a = dot(rdp.xz, rdp.xz);\n    float b = 2.0 * dot(rdp.xz, r0p.xz);\n    float c = dot(r0p.xz, r0p.xz) - vRadius*vRadius;\n    float disc = b*b - 4.0*a*c;\n    if (disc <= 0.0) {\n        discard;\n    }\n    float t = (-b - sqrt(disc))/(2.0*a);\n    if (t < 0.0) {\n        discard;\n    }\n\n    vec3 coord = r0p + rdp * t;\n    if (coord.y < 0.0 || coord.y > length(vPosA - vPosB)) {\n        discard;\n    }\n\n    vec3 color;\n    if (coord.y < vRadA + 0.5 * (length(vPosA - vPosB) - (vRadA + vRadB))) {\n        color = vColA;\n    } else {\n        color = vColB;\n    }\n\n    color = mix(color, vec3(1,1,1), uBondShade);\n\n    R = alignVector(j, i);\n    vec3 normal = normalize(R * vec3(coord.x, 0, coord.z));\n\n    coord = r0 + rd * t;\n    if (uMode == 0) {\n        gl_FragColor = vec4(color, 1);\n    } else if (uMode == 1) {\n        gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0);\n    }\n    gl_FragDepthEXT = -(coord.z - uDepth/2.0)/uDepth;\n}\n";
+	var bonds = "#version 100\nprecision highp float;\n\nattribute vec3 aImposter;\nattribute vec3 aPosA;\nattribute vec3 aPosB;\nattribute float aRadius;\nattribute float aRadA;\nattribute float aRadB;\nattribute vec3 aColA;\nattribute vec3 aColB;\n\nuniform mat4 uView;\nuniform mat4 uProjection;\nuniform mat4 uModel;\nuniform mat4 uRotation;\nuniform float uAtomScale;\nuniform float uRelativeAtomScale;\n\nvarying vec3 vNormal;\nvarying vec3 vPosA, vPosB;\nvarying float vRadA, vRadB;\nvarying vec3 vColA, vColB;\nvarying float vRadius;\n\nmat3 alignVector(vec3 a, vec3 b) {\n    vec3 v = cross(a, b);\n    float s = length(v);\n    float c = dot(a, b);\n    mat3 I = mat3(\n        1, 0, 0,\n        0, 1, 0,\n        0, 0, 1\n    );\n    mat3 vx = mat3(\n        0, v.z, -v.y,\n        -v.z, 0, v.x,\n        v.y, -v.x, 0\n    );\n    return I + vx + vx * vx * ((1.0 - c) / (s * s));\n}\n\nvoid main() {\n    vRadius = aRadius;\n    vec3 pos = vec3(aImposter);\n    // Scale the box in x and z to be bond-radius.\n    pos = pos * vec3(vRadius, 1, vRadius);\n    // Shift the origin-centered cube so that the bottom is at the origin.\n    pos = pos + vec3(0, 1, 0);\n    // Stretch the box in y so that it is the length of the bond.\n    pos = pos * vec3(1, length(aPosA - aPosB) * 0.5, 1);\n    // Find the rotation that aligns vec3(0, 1, 0) with vec3(uPosB - uPosA) and apply it.\n    vec3 a = normalize(vec3(-0.000001, 1.000001, 0.000001));\n    vec3 b = normalize(aPosB - aPosA);\n    mat3 R = alignVector(a, b);\n    pos = R * pos;\n    // Shift the cube so that the bottom is centered at the middle of atom A.\n    pos = pos + aPosA;\n\n    vec4 position = uModel * vec4(pos, 1);\n    gl_Position = uProjection * uView * position;\n    vPosA = aPosA;\n    vPosB = aPosB;\n    vRadA = uAtomScale * (1.0 + (aRadA - 1.0) * uRelativeAtomScale);\n    vRadB = uAtomScale * (1.0 + (aRadB - 1.0) * uRelativeAtomScale);\n    vColA = aColA;\n    vColB = aColB;\n}\n\n\n// __split__\n\n\n#version 100\n#extension GL_EXT_frag_depth: enable\nprecision highp float;\n\nuniform mat4 uRotation;\nuniform vec2 uBottomLeft;\nuniform vec2 uTopRight;\nuniform float uDepth;\nuniform float uRes;\nuniform float uBondShade;\nuniform int uMode;\n\nvarying vec3 vPosA, vPosB;\nvarying float vRadA, vRadB;\nvarying vec3 vColA, vColB;\nvarying float vRadius;\n\nmat3 alignVector(vec3 a, vec3 b) {\n    vec3 v = cross(a, b);\n    float s = length(v);\n    float c = dot(a, b);\n    mat3 I = mat3(\n        1, 0, 0,\n        0, 1, 0,\n        0, 0, 1\n    );\n    mat3 vx = mat3(\n        0, v.z, -v.y,\n        -v.z, 0, v.x,\n        v.y, -v.x, 0\n    );\n    return I + vx + vx * vx * ((1.0 - c) / (s * s));\n}\n\nvoid main() {\n\n    vec2 res = vec2(uRes, uRes);\n    vec3 r0 = vec3(uBottomLeft + (gl_FragCoord.xy/res) * (uTopRight - uBottomLeft), uDepth/2.0);\n    vec3 rd = vec3(0, 0, -1);\n\n    vec3 i = normalize(vPosB - vPosA);\n         i = vec3(uRotation * vec4(i, 0));\n    vec3 j = normalize(vec3(-0.000001, 1.000001, 0.000001));\n    mat3 R = alignVector(i, j);\n\n    vec3 r0p = r0 - vec3(uRotation * vec4(vPosA, 0));\n    r0p = R * r0p;\n    vec3 rdp = R * rd;\n\n    float a = dot(rdp.xz, rdp.xz);\n    float b = 2.0 * dot(rdp.xz, r0p.xz);\n    float c = dot(r0p.xz, r0p.xz) - vRadius*vRadius;\n    float disc = b*b - 4.0*a*c;\n    if (disc <= 0.0) {\n        discard;\n    }\n    float t = (-b - sqrt(disc))/(2.0*a);\n    if (t < 0.0) {\n        discard;\n    }\n\n    vec3 coord = r0p + rdp * t;\n    if (coord.y < 0.0 || coord.y > length(vPosA - vPosB)) {\n        discard;\n    }\n\n    vec3 color;\n    if (coord.y < vRadA + 0.5 * (length(vPosA - vPosB) - (vRadA + vRadB))) {\n        color = vColA;\n    } else {\n        color = vColB;\n    }\n\n    color = mix(color, vec3(1,1,1), uBondShade);\n\n    R = alignVector(j, i);\n    vec3 normal = normalize(R * vec3(coord.x, 0, coord.z));\n\n    coord = r0 + rd * t;\n    if (uMode == 0) {\n        gl_FragColor = vec4(color, 1);\n    } else if (uMode == 1) {\n        gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0);\n    }\n    gl_FragDepthEXT = -(coord.z - uDepth/2.0)/uDepth;\n}\n";
 
 	var texturedquad = "#version 100\nprecision highp float;\n\nattribute vec3 aPosition;\n\nvoid main() {\n    gl_Position = vec4(aPosition, 1);\n}\n\n\n// __split__\n\n\n#version 100\nprecision highp float;\n\nuniform sampler2D uTexture;\nuniform float uRes;\n\nvoid main() {\n    gl_FragColor = texture2D(uTexture, gl_FragCoord.xy/uRes);\n}\n";
 
@@ -2113,7 +2113,6 @@
 
 	    // Do calculation to find lattice unless specified
 	    var o = [l[3], l[7], l[11]]; //offset
-	    console.log(o);
 	    var v000 = fromValues$5(0+o[0], 0+o[1], 0+o[2]);
 	    var v100 = fromValues$5(l[0]+o[0], l[1]+o[1], l[2]+o[2]);
 	    var v010 = fromValues$5(l[4]+o[0], l[5]+o[1], l[6]+o[2]);
@@ -2475,6 +2474,7 @@
 	                    aImposter: 3,
 	                    aPosA: 3,
 	                    aPosB: 3,
+	                    aRadius: 1,
 	                    aRadA: 1,
 	                    aRadB: 1,
 	                    aColA: 3,
@@ -2484,6 +2484,7 @@
 	                var imposter = [];
 	                var posa = [];
 	                var posb = [];
+	                var radius = [];
 	                var rada = [];
 	                var radb = [];
 	                var cola = [];
@@ -2495,6 +2496,7 @@
 	                    imposter.push.apply(imposter, position);
 	                    posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
 	                    posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
+	                    radius.push.apply(radius, make36([2.5 * getBondRadius(view)]));
 	                    rada.push.apply(rada, make36([b.radA]));
 	                    radb.push.apply(radb, make36([b.radB]));
 	                    cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
@@ -2507,6 +2509,7 @@
 	                        imposter.push.apply(imposter, position);
 	                        posa.push.apply(posa, make36([b.posA.x, b.posA.y, b.posA.z]));
 	                        posb.push.apply(posb, make36([b.posB.x, b.posB.y, b.posB.z]));
+	                        radius.push.apply(radius, make36([0.5 * getBondRadius(view)]));
 	                        rada.push.apply(rada, make36([b.radA]));
 	                        radb.push.apply(radb, make36([b.radB]));
 	                        cola.push.apply(cola, make36([b.colA.r, b.colA.g, b.colA.b]));
@@ -2518,6 +2521,7 @@
 	                    attribs.aImposter.buffer.set(new Float32Array(imposter));
 	                    attribs.aPosA.buffer.set(new Float32Array(posa));
 	                    attribs.aPosB.buffer.set(new Float32Array(posb));
+	                    attribs.aRadius.buffer.set(new Float32Array(radius));
 	                    attribs.aRadA.buffer.set(new Float32Array(rada));
 	                    attribs.aRadB.buffer.set(new Float32Array(radb));
 	                    attribs.aColA.buffer.set(new Float32Array(cola));
@@ -2601,7 +2605,6 @@
 	            progBonds.setUniform("uBottomLeft", "2fv", [rect.left, rect.bottom]);
 	            progBonds.setUniform("uTopRight", "2fv", [rect.right, rect.top]);
 	            progBonds.setUniform("uRes", "1f", resolution);
-	            progBonds.setUniform("uBondRadius", "1f", 2.5 * getBondRadius(view));
 	            progBonds.setUniform("uBondShade", "1f", view.bondShade);
 	            progBonds.setUniform("uAtomScale", "1f", 2.5 * view.atomScale);
 	            progBonds.setUniform("uRelativeAtomScale", "1f", view.relativeAtomScale);
@@ -2647,7 +2650,6 @@
 	            progBonds.setUniform("uBottomLeft", "2fv", [rect.left, rect.bottom]);
 	            progBonds.setUniform("uTopRight", "2fv", [rect.right, rect.top]);
 	            progBonds.setUniform("uRes", "1f", resolution);
-	            progBonds.setUniform("uBondRadius", "1f", 2.5 * getBondRadius(view));
 	            progBonds.setUniform("uBondShade", "1f", view.bondShade);
 	            progBonds.setUniform("uAtomScale", "1f", 2.5 * view.atomScale);
 	            progBonds.setUniform("uRelativeAtomScale", "1f", view.relativeAtomScale);
@@ -2700,7 +2702,6 @@
 	            progBonds.setUniform("uBottomLeft", "2fv", [rect.left, rect.bottom]);
 	            progBonds.setUniform("uTopRight", "2fv", [rect.right, rect.top]);
 	            progBonds.setUniform("uRes", "1f", aoResolution);
-	            progBonds.setUniform("uBondRadius", "1f", 2.5 * getBondRadius(view));
 	            progBonds.setUniform("uBondShade", "1f", view.bondShade);
 	            progBonds.setUniform("uAtomScale", "1f", 2.5 * view.atomScale);
 	            progBonds.setUniform("uRelativeAtomScale", "1f", view.relativeAtomScale);
