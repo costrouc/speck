@@ -1,15 +1,13 @@
 export var config = {
-    ball: {
+    atoms: {
         atomScale: 0.6,
-        relativeAtomScale: 1.0,
+        relativeAtomScale: 0.64, // 1.0,
         bondScale: 0.5,
         ao: 0.75,
         aoRes: 256,
         brightness: 0.5,
         outline: 0.0,
         spf: 32,
-        bonds: false,
-        lattice: false,
         bondThreshold: 1.2,
         bondShade: 0.5,
         atomShade: 0.5,
@@ -17,11 +15,10 @@ export var config = {
         dofPosition: 0.5,
         fxaa: 1
     },
-    stickball: {
+    atomsbonds: {
         atomScale: 0.24,
         relativeAtomScale: 0.64,
         bondScale: 0.5,
-        bonds: true,
         bondThreshold: 1.2
     },
     toon: {

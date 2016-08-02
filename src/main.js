@@ -1,9 +1,10 @@
 "use strict";
 
 import * as glm from './gl-matrix/gl-matrix.js';
+import { xyz } from './io.js';
 import { config } from './presets.js';
 import { Renderer } from './renderer.js';
-import { extend } from './utils.js';
+import { extend, ajax_get } from './utils.js';
 import * as View from './view.js';
 import * as System from './system.js';
 
@@ -28,6 +29,34 @@ StructureViewProto.createdCallback = function() {
     this._renderer = new Renderer(canvas, this._view.resolution, this._view.aoRes);
     this._renderer.setResolution(this._view.resolution, this._view.aoRes);
     this._system = System.System();
+
+    if (this.hasAttribute('lattice')) {
+        this._view.lattice = true;
+    } else {
+        this._view.lattice = false;
+    }
+
+    if (this.hasAttribute('bonds')) {
+        this._view.bonds = true;
+        this._view = extend(this._view, config.atomsbonds);
+    } else {
+        this._view.bonds = false;
+    }
+    View.resolve(this._view);
+
+    if (this.hasAttribute('src')) {
+        var src = this.getAttribute('src');
+        var extension = src.split('.').slice(-1)[0];
+        if (extension === 'xyz') {
+            var that = this;
+            ajax_get(src, function(content) {
+                var data = xyz(content)[0]; //grab first frame for now
+                that.loadStructure({atoms: data});
+            });
+        } else {
+            throw "Unrecognized filename extension for src!";
+        }
+    }
 };
 
 StructureViewProto.loadStructure = function(data) {
@@ -76,17 +105,14 @@ StructureViewProto.loadStructure = function(data) {
 
     System.center(this._system);
 
-    if (this.hasAttribute('lattice')) {
+    if (this._view.lattice) {
         System.calculateLattice(this._system);
-        this._view.lattice = true;
     }
 
-    if (this.hasAttribute('bonds')) {
+    if (this._view.bonds) {
         System.calculateBonds(this._system);
-        this._view = extend({}, this._view, config.stickball);
     }
 
-    View.resolve(this._view);
     this._renderer.setSystem(this._system, this._view);
     View.center(this._view, this._system);
     needReset = true;
@@ -99,9 +125,11 @@ StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newVa
     if (attrName === "bonds") {
         if (this.hasAttribute("bonds")) {
             System.calculateBonds(this._system);
-            this._view = extend({}, this._view, config.stickball);
+            this._view.bonds = true;
+            this._view = extend(this._view, config.atomsbonds);
         } else {
-            this._view = extend({}, this._view, config.ball);
+            this._view.bonds = false;
+            this._view = extend(this._view, config.atoms);
         }
         View.resolve(this._view);
         this._renderer.setSystem(this._system, this._view);
@@ -116,12 +144,25 @@ StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newVa
         View.resolve(this._view);
         this._renderer.setSystem(this._system, this._view);
         needReset = true;
+    } else if (attrName === "src") {
+        var src = this.getAttribute('src');
+        var extension = src.split('.').slice(-1)[0];
+        if (extension === 'xyz') {
+            var that = this;
+            ajax_get(src, function(content) {
+                var data = xyz(content)[0]; //grab first frame for now
+                that.loadStructure({atoms: data});
+            });
+        } else {
+            throw "Unrecognized filename extension for src!";
+        }
     }
 };
 
 var StructureView = document.registerElement('structure-view', {
     prototype: StructureViewProto
 });
+
 
 function render(view, renderer) {
     if (needReset) {

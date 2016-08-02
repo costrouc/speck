@@ -22,7 +22,7 @@ export function View() {
         },
         rotation: glm.mat4.create(),
         resolution: 768
-    }, config.ball);
+    }, config.atoms);
 };
 
 

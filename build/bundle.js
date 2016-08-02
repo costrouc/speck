@@ -1442,18 +1442,37 @@
 	    };
 	})();
 
+	function xyz(data) {
+	    var lines = data.split('\n');
+	    var natoms = parseInt(lines[0]);
+	    var nframes = Math.floor(lines.length/(natoms+2));
+	    var trajectory = [];
+	    for(var i = 0; i < nframes; i++) {
+	        var atoms = [];
+	        for(var j = 0; j < natoms; j++) {
+	            var line = lines[i*(natoms+2)+j+2].split(/\s+/);
+	            var atom = {};
+	            var k = 0;
+	            while (line[k] == "") k++;
+	            atom.symbol = line[k++];
+	            atom.position = [parseFloat(line[k++]), parseFloat(line[k++]), parseFloat(line[k++])];
+	            atoms.push(atom);
+	        }
+	        trajectory.push(atoms);
+	    }
+	    return trajectory;
+	}
+
 	var config = {
-	    ball: {
+	    atoms: {
 	        atomScale: 0.6,
-	        relativeAtomScale: 1.0,
+	        relativeAtomScale: 0.64, // 1.0,
 	        bondScale: 0.5,
 	        ao: 0.75,
 	        aoRes: 256,
 	        brightness: 0.5,
 	        outline: 0.0,
 	        spf: 32,
-	        bonds: false,
-	        lattice: false,
 	        bondThreshold: 1.2,
 	        bondShade: 0.5,
 	        atomShade: 0.5,
@@ -1461,11 +1480,10 @@
 	        dofPosition: 0.5,
 	        fxaa: 1
 	    },
-	    stickball: {
+	    atomsbonds: {
 	        atomScale: 0.24,
 	        relativeAtomScale: 0.64,
 	        bondScale: 0.5,
-	        bonds: true,
 	        bondThreshold: 1.2
 	    },
 	    toon: {
@@ -1949,6 +1967,26 @@
 	    return out;
 	};
 
+
+	function ajax_get(url, success_callback, error_callback) {
+	    var request = new XMLHttpRequest();
+	    request.open('GET', url, true);
+
+	    request.onload = function() {
+	        if (request.status >= 200 && request.status < 400) {
+	            success_callback(request.responseText);
+	        } else {
+	            error_callback();
+	        }
+	    };
+
+	    request.onerror = function() {
+	        throw "Connection Error for ajax get request";
+	    };
+
+	    request.send();
+	}
+
 	var MIN_ATOM_RADIUS = Infinity;
 	var MAX_ATOM_RADIUS = -Infinity;
 
@@ -1976,7 +2014,7 @@
 	        },
 	        rotation: create$3(),
 	        resolution: 768
-	    }, config.ball);
+	    }, config.atoms);
 	};
 
 
@@ -2079,9 +2117,7 @@
 	        atoms: [],
 	        farAtom: undefined,
 	        bonds: [],
-	        lattice: {
-	            matrix: create$2()
-	        }
+	        lattice: {}
 	    };
 	};
 
@@ -2448,7 +2484,7 @@
 	                imposter.push.apply(imposter, position);
 	                var a = system.lattice.points[i];
 	                position$$.push.apply(position$$, make36(a.position));
-	                radius.push.apply(radius, make36([a.radius]));
+	                radius.push.apply(radius, make36([-4.0 * getBondRadius(view)]));
 	                color.push.apply(color, make36(a.color));
 	            }
 	        }
@@ -2825,6 +2861,34 @@
 	    this._renderer = new Renderer(canvas, this._view.resolution, this._view.aoRes);
 	    this._renderer.setResolution(this._view.resolution, this._view.aoRes);
 	    this._system = System();
+
+	    if (this.hasAttribute('lattice')) {
+	        this._view.lattice = true;
+	    } else {
+	        this._view.lattice = false;
+	    }
+
+	    if (this.hasAttribute('bonds')) {
+	        this._view.bonds = true;
+	        this._view = extend(this._view, config.atomsbonds);
+	    } else {
+	        this._view.bonds = false;
+	    }
+	    resolve(this._view);
+
+	    if (this.hasAttribute('src')) {
+	        var src = this.getAttribute('src');
+	        var extension = src.split('.').slice(-1)[0];
+	        if (extension === 'xyz') {
+	            var that = this;
+	            ajax_get(src, function(content) {
+	                var data = xyz(content)[0]; //grab first frame for now
+	                that.loadStructure({atoms: data});
+	            });
+	        } else {
+	            throw "Unrecognized filename extension for src!";
+	        }
+	    }
 	};
 
 	StructureViewProto.loadStructure = function(data) {
@@ -2873,17 +2937,14 @@
 
 	    center$1(this._system);
 
-	    if (this.hasAttribute('lattice')) {
+	    if (this._view.lattice) {
 	        calculateLattice(this._system);
-	        this._view.lattice = true;
 	    }
 
-	    if (this.hasAttribute('bonds')) {
+	    if (this._view.bonds) {
 	        calculateBonds(this._system);
-	        this._view = extend({}, this._view, config.stickball);
 	    }
 
-	    resolve(this._view);
 	    this._renderer.setSystem(this._system, this._view);
 	    center(this._view, this._system);
 	    needReset = true;
@@ -2896,9 +2957,11 @@
 	    if (attrName === "bonds") {
 	        if (this.hasAttribute("bonds")) {
 	            calculateBonds(this._system);
-	            this._view = extend({}, this._view, config.stickball);
+	            this._view.bonds = true;
+	            this._view = extend(this._view, config.atomsbonds);
 	        } else {
-	            this._view = extend({}, this._view, config.ball);
+	            this._view.bonds = false;
+	            this._view = extend(this._view, config.atoms);
 	        }
 	        resolve(this._view);
 	        this._renderer.setSystem(this._system, this._view);
@@ -2913,12 +2976,25 @@
 	        resolve(this._view);
 	        this._renderer.setSystem(this._system, this._view);
 	        needReset = true;
+	    } else if (attrName === "src") {
+	        var src = this.getAttribute('src');
+	        var extension = src.split('.').slice(-1)[0];
+	        if (extension === 'xyz') {
+	            var that = this;
+	            ajax_get(src, function(content) {
+	                var data = xyz(content)[0]; //grab first frame for now
+	                that.loadStructure({atoms: data});
+	            });
+	        } else {
+	            throw "Unrecognized filename extension for src!";
+	        }
 	    }
 	};
 
 	var StructureView = document.registerElement('structure-view', {
 	    prototype: StructureViewProto
 	});
+
 
 	function render(view, renderer) {
 	    if (needReset) {

@@ -203,7 +203,7 @@ export function Renderer(canvas, resolution, aoResolution) {
                 imposter.push.apply(imposter, cube.position);
                 var a = system.lattice.points[i];
                 position.push.apply(position, make36(a.position));
-                radius.push.apply(radius, make36([a.radius]));
+                radius.push.apply(radius, make36([-4.0 * View.getBondRadius(view)]));
                 color.push.apply(color, make36(a.color));
             }
         }

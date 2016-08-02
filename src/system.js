@@ -11,9 +11,7 @@ export function System() {
         atoms: [],
         farAtom: undefined,
         bonds: [],
-        lattice: {
-            matrix: glm.mat3.create()
-        }
+        lattice: {}
     };
 };
 
