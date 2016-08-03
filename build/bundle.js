@@ -2013,7 +2013,7 @@
 	            y: 0.0
 	        },
 	        rotation: create$3(),
-	        resolution: 768
+	        resolution: 400
 	    }, config.atoms);
 	};
 
@@ -2842,14 +2842,22 @@
 
 	var StructureViewProto = Object.create(HTMLElement.prototype);
 	StructureViewProto.createdCallback = function() {
+	    this.style.display = "inline-block";
+
 	    var root = this.createShadowRoot();
 
+	    var resolution = Math.min(this.clientWidth, this.clientHeight);
+	    if (resolution < 100) {
+	        resolution = 100;
+	    }
 	    var canvas = document.createElement('canvas');
-	    canvas.style.width="768px";
-	    canvas.style.height="768px";
+	    canvas.width=resolution;
+	    canvas.height=resolution;
+	    canvas.style.cssText = "position: absolute; margin: auto; top: 0; left: 0; right: 0; bottom: 0;";
 	    root.appendChild(canvas);
 
 	    this._view =  View();
+	    this._view.resolution = resolution;
 	    this._state = {
 	        needReset: false,
 	        lastX: 0.0,
@@ -2879,19 +2887,31 @@
 	    resolve(this._view);
 
 	    if (this.hasAttribute('src')) {
-	        var src = this.getAttribute('src');
-	        var extension = src.split('.').slice(-1)[0];
-	        if (extension === 'xyz') {
-	            var that = this;
-	            ajax_get(src, function(content) {
-	                var data = xyz(content)[0]; //grab first frame for now
-	                that.loadStructure({atoms: data});
-	            });
-	        } else {
-	            throw "Unrecognized filename extension for src!";
-	        }
+	        this.readStructure(this.getAttribute('src'), this.getAttribute('format'));
 	    }
 	};
+
+
+	StructureViewProto.readStructure = function(url, format) {
+	    var extension = url.split('.').slice(-1)[0];
+	    if (format && ['xyz'].indexOf(format) >= 0) {
+	        extension = format;
+	    } else if (format) {
+	        throw "Unrecognized structure format: " + format;
+	    }
+	    var that = this;
+	    if (extension === 'xyz') {
+	        ajax_get(url, function(content) {
+	            var data = xyz(content)[0]; //grab first frame for now
+	            that.loadStructure({atoms: data});
+	        }, function(){
+	            throw "Unable to load file from url";
+	        });
+	    } else {
+	        throw "Unrecognized filename extension for src!";
+	    }
+	};
+
 
 	StructureViewProto.loadStructure = function(data) {
 	    // Expects objects of {lattice: 3x3, atoms: Nx3}
@@ -2979,19 +2999,12 @@
 	        this._renderer.setSystem(this._system, this._view);
 	        this._state.needReset = true;
 	    } else if (attrName === "src") {
-	        var src = this.getAttribute('src');
-	        var extension = src.split('.').slice(-1)[0];
-	        if (extension === 'xyz') {
-	            var that = this;
-	            ajax_get(src, function(content) {
-	                var data = xyz(content)[0]; //grab first frame for now
-	                that.loadStructure({atoms: data});
-	            });
-	        } else {
-	            throw "Unrecognized filename extension for src!";
+	        if (this.hasAttribute('src')) {
+	            this.readStructure(this.getAttribute('src'), this.getAttribute('format'));
 	        }
 	    }
 	};
+
 
 	var StructureView = document.registerElement('structure-view', {
 	    prototype: StructureViewProto
@@ -3034,9 +3047,17 @@
 	    }, 10);
 
 	    window.addEventListener("mousemove", function(e) {
+	        if ((speck.clientWidth != speck._state.width) || (speck.clientHeight != speck._state.height)) {
+	            speck.dispatchEvent(new CustomEvent("resize-canvas", {"detail": "resize canvas"}));
+	        }
+
+	        speck._state.width = speck.clientWidth;
+	        speck._state.height = speck.clientHeight;
+
 	        if (!speck._state.buttonDown) {
 	            return;
 	        }
+
 	        var dx = e.clientX - speck._state.lastX;
 	        var dy = e.clientY - speck._state.lastY;
 	        if (dx == 0 && dy == 0) {
@@ -3065,6 +3086,18 @@
 	        speck._state.needReset = true;
 
 	        e.preventDefault();
+	    });
+
+	    speck.addEventListener("resize-canvas", function(e) {
+	        var resolution = Math.min(speck.clientWidth, speck.clientHeight);
+	        if (resolution < 100) {
+	            resolution = 100;
+	        }
+	        console.log("resolution changed");
+	        speck._view.resolution = resolution;
+	        resolve(speck._view);
+	        speck._renderer.setResolution(speck._view.resolution, speck._view.aoRes);
+	        speck._state.needReset = true;
 	    });
 	}
 

@@ -21,7 +21,7 @@ export function View() {
             y: 0.0
         },
         rotation: glm.mat4.create(),
-        resolution: 768
+        resolution: 400
     }, config.atoms);
 };
 

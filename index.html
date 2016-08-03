@@ -3,31 +3,25 @@
         <meta charset="utf-8">
         <title>Speck</title>
         <link rel="shortcut icon" href="static/favicon.png">
-        <script src="build/bundle.min.js"></script>
+        <script src="build/bundle.js"></script>
+        <style>
+         body {
+             margin: 0;
+         }
+
+         structure-view {
+             width: 100vw;
+             height: 100vh;
+         }
+        </style>
     </head>
 
     <body>
-        <structure-view lattice bonds id="structure"></structure-view>
-        <structure-view lattice bonds src="https://finch.aves.io/static/samples/polymer.xyz"></structure-view>
+        <structure-view lattice bonds src="static/samples/au.xyz"></structure-view>
     </body>
 
     <script>
      'use strict';
-
-     /* var xyz = []
-      * for (var i = 0; i < 100; i++) {
-      *     for (var j = 0; j < 100; j++) {
-      *         for (var k = 0; k < 10; k++) {
-      *             var symbol = 'N';
-      *             if (i % 2 == 0) {
-      *                 symbol = 'C';
-      *             } else if (i % 3 == 0) {
-      *                 symbol = 'O';
-      *             }
-      *             xyz.push({'symbol': symbol, position: [i*2.0, j*2.0, k*2.0]});
-      *         }
-      *     }
-      * }*/
 
      var xyz = [
              {symbol: 'N', position: [24.33500,  0.79100, -23.23000]},
@@ -45,28 +39,8 @@
              {symbol: 'N', position: [25.49100,  4.13800, -23.90300]}
      ];
 
-
-     /* var xyz = [
-      *     {symbol: 'N', position: [0.0, 0.0, 0.0]},
-      *     {symbol: 'N', position: [2.0, 0.0, 0.0]},
-      *     {symbol: 'N', position: [0.0, 2.0, 0.0]},
-      *     {symbol: 'N', position: [2.0, 2.0, 0.0]},
-      *     {symbol: 'N', position: [0.0, 0.0, 2.0]},
-      *     {symbol: 'N', position: [2.0, 0.0, 2.0]},
-      *     {symbol: 'N', position: [0.0, 2.0, 2.0]},
-      *     {symbol: 'N', position: [2.0, 2.0, 2.0]}
-      * ]*/
-
      /* basic initialization */
      var speck = document.getElementById("structure");
-     /* speck.loadStructure({
-      *     lattice:[4.0, 0, 0, 0, 4.0, 0, 0, 0, 4.0],
-      *     atoms: [{symbol: "Au", position: [0, 0, 0]},
-      *             {symbol: "Au", position: [0, 2.0, 2.0]},
-      *             {symbol: "Au", position: [2.0, 0.0, 2.0]},
-      *             {symbol: "Au", position: [2.0, 2.0, 2.0]}]
-
-      * });*/
-     speck.loadStructure({atoms: xyz});
+     /* speck.loadStructure({atoms: xyz});*/
     </script>
 </html>
