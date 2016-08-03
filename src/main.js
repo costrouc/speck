@@ -8,22 +8,25 @@ import { extend, ajax_get } from './utils.js';
 import * as View from './view.js';
 import * as System from './system.js';
 
-var needReset = false;
-
-//Global event variables
-var lastX = 0.0;
-var lastY = 0.0;
-var buttonDown = false;
 
 var StructureViewProto = Object.create(HTMLElement.prototype);
 StructureViewProto.createdCallback = function() {
     var root = this.createShadowRoot();
 
     var canvas = document.createElement('canvas');
+    canvas.style.width="768px";
+    canvas.style.height="768px";
     root.appendChild(canvas);
 
     this._view =  View.View();
-    add_event_handlers(canvas, this._view);
+    this._state = {
+        needReset: false,
+        lastX: 0.0,
+        lastY: 0.0,
+        buttonDown: false
+    };
+
+    add_event_handlers(this);
 
     // Rendering pipeline
     this._renderer = new Renderer(canvas, this._view.resolution, this._view.aoRes);
@@ -115,9 +118,9 @@ StructureViewProto.loadStructure = function(data) {
 
     this._renderer.setSystem(this._system, this._view);
     View.center(this._view, this._system);
-    needReset = true;
+    this._state.needReset = true;
 
-    render(this._view, this._renderer);
+    render(this);
 };
 
 
@@ -133,7 +136,7 @@ StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newVa
         }
         View.resolve(this._view);
         this._renderer.setSystem(this._system, this._view);
-        needReset = true;
+        this._state.needReset = true;
     } else if (attrName === "lattice") {
         if (this.hasAttribute("lattice")) {
             System.calculateLattice(this._system);
@@ -143,7 +146,7 @@ StructureViewProto.attributeChangedCallback = function(attrName, oldValue, newVa
         }
         View.resolve(this._view);
         this._renderer.setSystem(this._system, this._view);
-        needReset = true;
+        this._state.needReset = true;
     } else if (attrName === "src") {
         var src = this.getAttribute('src');
         var extension = src.split('.').slice(-1)[0];
@@ -164,61 +167,61 @@ var StructureView = document.registerElement('structure-view', {
 });
 
 
-function render(view, renderer) {
-    if (needReset) {
-        renderer.reset();
-        needReset = false;
+function render(speck) {
+    if (speck._state.needReset) {
+        speck._renderer.reset();
+        speck._state.needReset = false;
     }
-    renderer.render(view);
+    speck._renderer.render(speck._view);
     requestAnimationFrame(function(){
-        render(view, renderer);
+        render(speck);
     });
 };
 
 
-function add_event_handlers(canvas, view) {
-    canvas.addEventListener('mousedown', function(e) {
+function add_event_handlers(speck) {
+    speck.addEventListener('mousedown', function(e) {
         document.body.style.cursor = "none";
         if (e.button == 0) {
-            buttonDown = true;
+            speck._state.buttonDown = true;
         }
-        lastX = e.clientX;
-        lastY = e.clientY;
+        speck._state.lastX = e.clientX;
+        speck._state.lastY = e.clientY;
     });
 
     window.addEventListener("mouseup", function(e) {
         document.body.style.cursor = "";
         if (e.button == 0) {
-            buttonDown = false;
+            speck._state.buttonDown = false;
         }
     });
 
     setInterval(function() {
-        if (!buttonDown) {
+        if (!speck._state.buttonDown) {
             document.body.style.cursor = "";
         }
     }, 10);
 
     window.addEventListener("mousemove", function(e) {
-        if (!buttonDown) {
+        if (!speck._state.buttonDown) {
             return;
         }
-        var dx = e.clientX - lastX;
-        var dy = e.clientY - lastY;
+        var dx = e.clientX - speck._state.lastX;
+        var dy = e.clientY - speck._state.lastY;
         if (dx == 0 && dy == 0) {
             return;
         }
-        lastX = e.clientX;
-        lastY = e.clientY;
+        speck._state.lastX = e.clientX;
+        speck._state.lastY = e.clientY;
         if (e.shiftKey) {
-            View.translate(view, dx, dy);
+            View.translate(speck._view, dx, dy);
         } else {
-            View.rotate(view, dx, dy);
+            View.rotate(speck._view, dx, dy);
         }
-        needReset = true;
+        speck._state.needReset = true;
     });
 
-    canvas.addEventListener("wheel", function(e) {
+    speck.addEventListener("wheel", function(e) {
         var wd = 0;
         if (e.deltaY < 0) {
             wd = 1;
@@ -226,9 +229,9 @@ function add_event_handlers(canvas, view) {
         else {
             wd = -1;
         }
-        view.zoom = view.zoom * (wd === 1 ? 1/0.9 : 0.9);
-        View.resolve(view);
-        needReset = true;
+        speck._view.zoom = speck._view.zoom * (wd === 1 ? 1/0.9 : 0.9);
+        View.resolve(speck._view);
+        speck._state.needReset = true;
 
         e.preventDefault();
     });

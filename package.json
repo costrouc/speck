@@ -1,26 +1,35 @@
 {
-    "name": "speck",
-    "version": "1.0.0",
-    "description": "Speck is a library for drawing molecular beautifully",
-    "main": "index.js",
-    "devDependencies": {
-        "rollup": "latest"
-    },
+  "name": "speck",
+  "version": "1.0.0",
+  "description": "Speck is a library for drawing molecular beautifully",
+  "main": "index.js",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.9.0",
+    "rollup": "latest"
+  },
     "scripts": {
-        "rollup": "rollup --config \"rollup.config.js\""
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/costrouc/speck.git"
-    },
-    "keywords": [
-        "Molecular",
-        "Visualization"
-    ],
-    "author": "Chris Ostrouchov, wwwtyro",
-    "license": "UNLICENSED",
-    "bugs": {
-        "url": "https://github.com/costrouc/speck/issues"
-    },
-    "homepage": "https://github.com/costrouc/speck#readme"
+        "build": "npm run rollup && npm run babel && npm run uglify",
+        "rollup": "rollup --config rollup.config.js",
+      "babel": "babel build/bundle.js -o build/bundle.babel.js",
+      "uglify": "uglifyjs build/bundle.babel.js -o build/bundle.min.js --compress --mangle"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/costrouc/speck.git"
+  },
+  "keywords": [
+    "Molecular",
+    "Visualization"
+  ],
+  "author": "Chris Ostrouchov, wwwtyro",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/costrouc/speck/issues"
+  },
+  "homepage": "https://github.com/costrouc/speck#readme",
+  "dependencies": {
+    "babel-cli": "^6.11.4",
+    "babel-plugin-uglify": "^1.0.2",
+    "rollup": "^0.34.3"
+  }
 }
