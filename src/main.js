@@ -1,5 +1,6 @@
 "use strict";
 
+import "../bower_components/webcomponentsjs/webcomponents-lite.js";
 import * as glm from './gl-matrix/gl-matrix.js';
 import { xyz } from './io.js';
 import { config } from './presets.js';
@@ -13,7 +14,7 @@ var StructureViewProto = Object.create(HTMLElement.prototype);
 StructureViewProto.createdCallback = function() {
     this.style.display = "inline-block";
 
-    var root = this.createShadowRoot();
+    // var root = this.createShadowRoot();
 
     var resolution = Math.min(this.clientWidth, this.clientHeight);
     if (resolution < 100) {
@@ -23,7 +24,7 @@ StructureViewProto.createdCallback = function() {
     canvas.width=resolution;
     canvas.height=resolution;
     canvas.style.cssText = "position: absolute; margin: auto; top: 0; left: 0; right: 0; bottom: 0;";
-    root.appendChild(canvas);
+    this.appendChild(canvas);
 
     this._view =  View.View();
     this._view.resolution = resolution;
