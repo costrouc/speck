@@ -23,7 +23,7 @@ StructureViewProto.createdCallback = function() {
     var canvas = document.createElement('canvas');
     canvas.width=resolution;
     canvas.height=resolution;
-    canvas.style.cssText = "position: absolute; margin: auto; top: 0; left: 0; right: 0; bottom: 0;";
+    canvas.style.cssText = "display: block; margin: auto;";
     this.appendChild(canvas);
 
     this._view =  View.View();
