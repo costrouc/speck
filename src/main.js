@@ -263,7 +263,6 @@ function add_event_handlers(speck) {
         if (resolution < 100) {
             resolution = 100;
         }
-        console.log("resolution changed");
         speck._view.resolution = resolution;
         View.resolve(speck._view);
         speck._renderer.setResolution(speck._view.resolution, speck._view.aoRes);

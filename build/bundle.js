@@ -5599,7 +5599,6 @@
 	        if (resolution < 100) {
 	            resolution = 100;
 	        }
-	        console.log("resolution changed");
 	        speck._view.resolution = resolution;
 	        resolve(speck._view);
 	        speck._renderer.setResolution(speck._view.resolution, speck._view.aoRes);
